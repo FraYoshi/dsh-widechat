@@ -1,7 +1,7 @@
 {
   "name": "@furayoshi/dsh-wide-chat",
-  "version": "0.1.1",
-  "description": "Widens the DeepSeek Harness conversation column to ~98% of the available center-column width and right-aligns the session stats strip.",
+  "version": "0.2.0",
+  "description": "DeepSeek Harness plugin: widens the conversation column to a configurable gutter, right-aligns the session stats strip, with a settings-row UI to tune both. Built for the DSH client plugin slot `settings.general.item`.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -10,8 +10,8 @@
       "default": "./lib/index.js"
     },
     "./client": {
-      "types": "./lib/client.d.ts",
-      "default": "./lib/client.js"
+      "types": "./lib/client/index.d.ts",
+      "default": "./lib/client/index.js"
     },
     "./package.json": "./package.json"
   },
@@ -26,7 +26,8 @@
     "plugin",
     "conversation",
     "layout",
-    "css"
+    "css",
+    "settings"
   ],
   "license": "MIT",
   "repository": {
@@ -38,9 +39,47 @@
   },
   "homepage": "https://github.com/FraYoshi/dsh-wide-chat#readme",
   "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
     "client": {
-      "platform": "web"
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-settings-general",
+        "@deepseek-ai/dsh-client-locale"
+      ]
     }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && tsx scripts/build-client.ts",
+    "build:client": "tsx scripts/build-client.ts",
+    "typecheck": "tsc -p tsconfig.typecheck.json",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": ">=4.0.1",
+    "@deepseek-ai/dsh-settings": ">=0.1.0-rc.8"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "^3.18.1"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.1",
+    "@deepseek-ai/dsh-client-runtime": "0.1.0-rc.8",
+    "@deepseek-ai/dsh-client-ui-primitives": "0.1.0-rc.8",
+    "@deepseek-ai/dsh-client-ui-slots": "0.1.0-rc.8",
+    "@deepseek-ai/dsh-settings": "0.1.0-rc.8",
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.2.18",
+    "react": "^18.3.1",
+    "tsdown": "^0.22.14",
+    "tsx": "^4.23.12",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "publishConfig": {
     "access": "public"

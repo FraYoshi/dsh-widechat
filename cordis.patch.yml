@@ -1,0 +1,6 @@
+# Patch layer for `@furayoshi/dsh-wide-chat`. Inserted into the host composition
+# by `dsh.bundle.patch` (declared in this package's package.json), so the
+# settings-namespace registration in `src/index.ts` actually runs.
+- insert:
+    - id: '@furayoshi/dsh-wide-chat'
+      name: '@furayoshi/dsh-wide-chat'

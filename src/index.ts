@@ -17,7 +17,16 @@
  */
 import { settingsNamespace } from "@deepseek-ai/dsh-settings";
 import z from "@deepseek-ai/schemastery";
-import { CHAT_GUTTER_PCT_FIELD, CHAT_GUTTER_PCT_MAX, CHAT_GUTTER_PCT_MIN, PRESERVE_GUTTER_WHEN_SIDEBAR_COLLAPSED_FIELD, STATS_ALIGN_FIELD, STATS_ALIGN_VALUES, WIDE_CHAT_SETTINGS_NAMESPACE, } from "./settings.js";
+import {
+  CHAT_GUTTER_PCT_FIELD,
+  CHAT_GUTTER_PCT_MAX,
+  CHAT_GUTTER_PCT_MIN,
+  PRESERVE_GUTTER_WHEN_SIDEBAR_COLLAPSED_FIELD,
+  STATS_ALIGN_FIELD,
+  STATS_ALIGN_VALUES,
+  WIDE_CHAT_SETTINGS_NAMESPACE,
+} from "./settings.js";
+
 /**
  * Durable settings schema. The browser half binds a scope to this same
  * namespace, reads these fields, and writes them through `scope.set` /
@@ -25,18 +34,32 @@ import { CHAT_GUTTER_PCT_FIELD, CHAT_GUTTER_PCT_MAX, CHAT_GUTTER_PCT_MIN, PRESER
  * shape and bounds, not defaults.
  */
 export const WideChatSettingsSchema = z.object({
-    [CHAT_GUTTER_PCT_FIELD]: z
-        .number()
-        .min(CHAT_GUTTER_PCT_MIN)
-        .max(CHAT_GUTTER_PCT_MAX)
-        .required(false),
-    [STATS_ALIGN_FIELD]: z.union(STATS_ALIGN_VALUES).required(false),
-    [PRESERVE_GUTTER_WHEN_SIDEBAR_COLLAPSED_FIELD]: z.boolean().required(false),
+  [CHAT_GUTTER_PCT_FIELD]: z
+    .number()
+    .min(CHAT_GUTTER_PCT_MIN)
+    .max(CHAT_GUTTER_PCT_MAX)
+    .required(false),
+  [STATS_ALIGN_FIELD]: z.union(STATS_ALIGN_VALUES as unknown as [string, ...string[]]).required(false),
+  [PRESERVE_GUTTER_WHEN_SIDEBAR_COLLAPSED_FIELD]: z.boolean().required(false),
 });
+
 /** Host plugin body. Registers the namespace with the host settings service. */
-export function apply(ctx) {
-    ctx.inject(["settings"], (settingsCtx) => {
-        settingsCtx.settings.register(settingsNamespace(WIDE_CHAT_SETTINGS_NAMESPACE), WideChatSettingsSchema);
-    });
+export function apply(ctx: any): void {
+  ctx.inject(["settings"], (settingsCtx: any) => {
+    settingsCtx.settings.register(
+      settingsNamespace(WIDE_CHAT_SETTINGS_NAMESPACE),
+      WideChatSettingsSchema,
+    );
+  });
 }
-export { WIDE_CHAT_SETTINGS_NAMESPACE, CHAT_GUTTER_PCT_FIELD, STATS_ALIGN_FIELD, PRESERVE_GUTTER_WHEN_SIDEBAR_COLLAPSED_FIELD, STATS_ALIGN_VALUES, CHAT_GUTTER_PCT_MIN, CHAT_GUTTER_PCT_MAX, DEFAULTS, } from "./settings.js";
+
+export {
+  WIDE_CHAT_SETTINGS_NAMESPACE,
+  CHAT_GUTTER_PCT_FIELD,
+  STATS_ALIGN_FIELD,
+  PRESERVE_GUTTER_WHEN_SIDEBAR_COLLAPSED_FIELD,
+  STATS_ALIGN_VALUES,
+  CHAT_GUTTER_PCT_MIN,
+  CHAT_GUTTER_PCT_MAX,
+  DEFAULTS,
+} from "./settings.js";
