@@ -1,7 +1,7 @@
 {
-  "name": "dsh-wide-chat",
-  "version": "0.1.0",
-  "description": "Widens the DeepSeek Harness conversation column to ~98% of the available center-column width.",
+  "name": "@furayoshi/dsh-wide-chat",
+  "version": "0.1.1",
+  "description": "Widens the DeepSeek Harness conversation column to ~98% of the available center-column width and right-aligns the session stats strip.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
