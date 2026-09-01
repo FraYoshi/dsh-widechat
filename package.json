@@ -1,0 +1,48 @@
+{
+  "name": "dsh-wide-chat",
+  "version": "0.1.0",
+  "description": "Widens the DeepSeek Harness conversation column to ~98% of the available center-column width.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/client.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "plugin",
+    "conversation",
+    "layout",
+    "css"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FraYoshi/dsh-wide-chat.git"
+  },
+  "bugs": {
+    "url": "https://github.com/FraYoshi/dsh-wide-chat/issues"
+  },
+  "homepage": "https://github.com/FraYoshi/dsh-wide-chat#readme",
+  "dsh": {
+    "client": {
+      "platform": "web"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
