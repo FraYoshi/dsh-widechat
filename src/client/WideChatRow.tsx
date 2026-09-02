@@ -1,20 +1,21 @@
 /**
  * The `dsh-wide-chat` row in the General settings page. Renders three
  * controls:
- *   • a slider for `chatGutterPct`
+ *   • a slider + number input for `chatGutterPct`
  *   • a 3-segment toggle for `statsAlign` (left / center / right)
- *   • a slider for `userBubblePct`
+ *   • a slider + number input for `userBubblePct`
  *
- * Reads the current values from the bound SettingsScope snapshot and
- * writes back through `scope.set`. No local store mirror; the scope
- * is the only source of truth.
+ * The row subscribes to its SettingsScope so the controls reflect the
+ * current value on every change — without the subscription, React would
+ * only re-render the row when its own state changes, and the slider
+ * thumb would stay where it was after the user dragged it.
  *
  * The scope object's runtime type is `SettingsScope<any>` from
  * `@deepseek-ai/dsh-client-runtime/client`; we keep this file free of
  * runtime imports of that package so the bundle's external list stays
  * tight (and a type-only import is erased at build time).
  */
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import {
   CHAT_GUTTER_PCT_FIELD,
@@ -36,6 +37,7 @@ interface ScopeLike {
   getSnapshot: () => { value?: unknown };
   set: (field: string, value: unknown) => Promise<void>;
   unset: (field: string) => Promise<void>;
+  subscribe: (listener: () => void) => () => void;
 }
 
 /** Injected face handed to the row by the slot registration. */
@@ -67,10 +69,14 @@ function clampNumber(
   return rounded;
 }
 
-export function WideChatRow({ scope, t }: WideChatRowProps): ReactNode {
-  const snapshot = scope.getSnapshot();
-  const section = snapshot.value;
+interface ResolvedValues {
+  gutterPct: number;
+  statsAlign: "left" | "center" | "right";
+  userBubblePct: number;
+}
 
+function readValues(scope: ScopeLike): ResolvedValues {
+  const section = scope.getSnapshot().value;
   const gutterRaw = readField<number>(section, CHAT_GUTTER_PCT_FIELD, DEFAULTS[CHAT_GUTTER_PCT_FIELD]);
   const gutterPct = clampNumber(gutterRaw, CHAT_GUTTER_PCT_MIN, CHAT_GUTTER_PCT_MAX, DEFAULTS[CHAT_GUTTER_PCT_FIELD]);
   const statsAlignRaw = readField<string>(section, STATS_ALIGN_FIELD, DEFAULTS[STATS_ALIGN_FIELD]);
@@ -84,28 +90,50 @@ export function WideChatRow({ scope, t }: WideChatRowProps): ReactNode {
     USER_BUBBLE_PCT_MAX,
     DEFAULTS[USER_BUBBLE_PCT_FIELD],
   );
+  return { gutterPct, statsAlign, userBubblePct };
+}
+
+export function WideChatRow({ scope, t }: WideChatRowProps): ReactNode {
+  // The SettingsScope doesn't re-render React rows on its own. Subscribe
+  // and bump a tick so the row re-renders with the current snapshot
+  // every time the scope changes (including the user's own writes).
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const unsubscribe = scope.subscribe(() => {
+      setTick((n) => n + 1);
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, [scope]);
+
+  const { gutterPct, statsAlign, userBubblePct } = readValues(scope);
 
   const setGutter = useCallback(
     (next: number) => {
-      void scope.set(CHAT_GUTTER_PCT_FIELD, next);
+      const clamped = clampNumber(next, CHAT_GUTTER_PCT_MIN, CHAT_GUTTER_PCT_MAX, DEFAULTS[CHAT_GUTTER_PCT_FIELD]);
+      void scope.set(CHAT_GUTTER_PCT_FIELD, clamped);
     },
     [scope],
   );
   const setAlign = useCallback(
     (next: string) => {
-      void scope.set(STATS_ALIGN_FIELD, next);
+      if ((STATS_ALIGN_VALUES as readonly string[]).includes(next)) {
+        void scope.set(STATS_ALIGN_FIELD, next);
+      }
     },
     [scope],
   );
   const setUserBubble = useCallback(
     (next: number) => {
-      void scope.set(USER_BUBBLE_PCT_FIELD, next);
+      const clamped = clampNumber(next, USER_BUBBLE_PCT_MIN, USER_BUBBLE_PCT_MAX, DEFAULTS[USER_BUBBLE_PCT_FIELD]);
+      void scope.set(USER_BUBBLE_PCT_FIELD, clamped);
     },
     [scope],
   );
 
   return (
-    <div className="dswc-row" data-plugin="dsh-wide-chat">
+    <div className="dswc-row" data-plugin="dsh-wide-chat" data-tick={tick}>
       <div className="dswc-row__head">
         <div className="dswc-row__title">{t("row.title")}</div>
         <div className="dswc-row__desc">{t("row.description")}</div>
@@ -123,7 +151,20 @@ export function WideChatRow({ scope, t }: WideChatRowProps): ReactNode {
             value={gutterPct}
             onChange={(event) => setGutter(Number(event.target.value))}
           />
-          <span className="dswc-row__value">{gutterPct}%</span>
+          <input
+            className="dswc-row__number"
+            type="number"
+            min={CHAT_GUTTER_PCT_MIN}
+            max={CHAT_GUTTER_PCT_MAX}
+            step={1}
+            value={gutterPct}
+            aria-label={t("gutter.label")}
+            onChange={(event) => {
+              const value = Number(event.target.value);
+              if (Number.isFinite(value)) setGutter(value);
+            }}
+          />
+          <span className="dswc-row__unit">%</span>
         </div>
         <div className="dswc-help">{t("gutter.help")}</div>
       </div>
@@ -156,7 +197,20 @@ export function WideChatRow({ scope, t }: WideChatRowProps): ReactNode {
             value={userBubblePct}
             onChange={(event) => setUserBubble(Number(event.target.value))}
           />
-          <span className="dswc-row__value">{userBubblePct}%</span>
+          <input
+            className="dswc-row__number"
+            type="number"
+            min={USER_BUBBLE_PCT_MIN}
+            max={USER_BUBBLE_PCT_MAX}
+            step={1}
+            value={userBubblePct}
+            aria-label={t("userBubble.label")}
+            onChange={(event) => {
+              const value = Number(event.target.value);
+              if (Number.isFinite(value)) setUserBubble(value);
+            }}
+          />
+          <span className="dswc-row__unit">%</span>
         </div>
         <div className="dswc-help">{t("userBubble.help")}</div>
       </div>
