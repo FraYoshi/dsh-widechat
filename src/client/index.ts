@@ -113,22 +113,57 @@ export function apply(ctx: any): void {
     "dsh-wide-chat: dictionaries",
   );
 
-  // Bind the scope and re-inject on changes.
-  const scope = ctx.settingsScope.bind({ namespace: WIDE_CHAT_SETTINGS_NAMESPACE });
-  ctx.effect(() => {
-    const disposeSheet = applyForScope(readSection(scope.getSnapshot()));
-    const unsubscribe = scope.subscribe(() => {
-      // The scope only re-renders the CSS, not the row — but the row reads
-      // its own values from `scope.getSnapshot()` on every render, so the
-      // row will redraw on its own subscription path. The CSS sheet is the
-      // half we manage here.
-      disposeSheet();
-    });
-    return () => {
-      unsubscribe();
-      disposeSheet();
-    };
-  }, "dsh-wide-chat: settings-driven stylesheet");
+  // Bind the scope and re-inject on changes. If the host-side settings
+  // service is missing or the namespace was never registered, the bind
+  // returns a scope that reads undefined; applyForScope falls back to
+  // the bundled defaults in that case so the chat column is still
+  // widened even when the user has never opened the settings panel.
+  let scope: ReturnType<typeof ctx.settingsScope.bind> | null = null;
+  try {
+    scope = ctx.settingsScope.bind({ namespace: WIDE_CHAT_SETTINGS_NAMESPACE });
+  } catch (error) {
+    console.warn(`[${PLUGIN_ID}] settingsScope.bind failed:`, error);
+  }
+  if (scope !== null) {
+    ctx.effect(() => {
+      let disposeSheet: () => void = () => {};
+      try {
+        // The scope's `subscribe` listener fires on every change, and
+        // may also fire once with the current snapshot on subscription.
+        // We need to dispose the old stylesheet AND inject a fresh one
+        // on every change, not just dispose (otherwise the stylesheet
+        // disappears the moment the scope fires).
+        const reapply = () => {
+          disposeSheet();
+          try {
+            disposeSheet = applyForScope(readSection(scope!.getSnapshot()));
+          } catch (error) {
+            console.warn(`[${PLUGIN_ID}] reapply failed:`, error);
+            disposeSheet = () => {};
+          }
+        };
+        reapply();
+        const unsubscribe = scope!.subscribe(reapply);
+        return () => {
+          unsubscribe();
+          disposeSheet();
+        };
+      } catch (error) {
+        // The scope may be in a transient state on first activation
+        // (host registration not yet loaded). Return a no-op cleanup;
+        // the next scope change will trigger reapply via subscribe.
+        console.warn(`[${PLUGIN_ID}] initial stylesheet inject failed:`, error);
+        return () => {};
+      }
+    }, "dsh-wide-chat: settings-driven stylesheet");
+  } else {
+    // No scope available — inject the override with bundled defaults so
+    // the chat column is still widened.
+    ctx.effect(() => {
+      const disposeSheet = applyForScope(undefined);
+      return () => disposeSheet();
+    }, "dsh-wide-chat: settings-driven stylesheet (no scope)");
+  }
 
   // The settings row.
   const injected = () => ({ scope });
