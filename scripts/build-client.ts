@@ -23,7 +23,7 @@ import { build } from "tsdown";
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-const ID = "@furayoshi/dsh-wide-chat";
+const ID = "@furayoshi/dsh-widechat";
 const ENTRY = "src/client/index.ts";
 const OUT_DIR = "lib/client";
 const OUT_FILE = "index.js";

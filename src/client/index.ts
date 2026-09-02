@@ -1,5 +1,5 @@
 /**
- * Browser half: registers the `dsh-wide-chat` row into the General settings
+ * Browser half: registers the `dsh-widechat` row into the General settings
  * page (`settings.general.item`) and keeps the CSS override sheet in sync
  * with the user's settings on the bound scope.
  *
@@ -27,7 +27,7 @@ import { buildStylesheet, injectStylesheet, resolveConfig } from "./css";
 import { STYLES } from "./styles";
 
 /** Plugin id we tag our `<style>` tags with. */
-const PLUGIN_ID = "dsh-wide-chat";
+const PLUGIN_ID = "dsh-widechat";
 
 /**
  * Required client services. `settingsScope` provides the per-namespace scope
@@ -105,12 +105,12 @@ function readSection(snapshot: any): unknown {
 export function apply(ctx: any): void {
   // Row styles — must land before the row mounts or the first paint is
   // unstyled and flashes.
-  ctx.effect(() => installRowStyles(), "dsh-wide-chat: row styles");
+  ctx.effect(() => installRowStyles(), "dsh-widechat: row styles");
 
   // Dictionaries.
   ctx.effect(
     () => ctx.locale.register(WIDE_CHAT_LOCALE_NS, dictionaries),
-    "dsh-wide-chat: dictionaries",
+    "dsh-widechat: dictionaries",
   );
 
   // Bind the scope and re-inject on changes. If the host-side settings
@@ -155,14 +155,14 @@ export function apply(ctx: any): void {
         console.warn(`[${PLUGIN_ID}] initial stylesheet inject failed:`, error);
         return () => {};
       }
-    }, "dsh-wide-chat: settings-driven stylesheet");
+    }, "dsh-widechat: settings-driven stylesheet");
   } else {
     // No scope available — inject the override with bundled defaults so
     // the chat column is still widened.
     ctx.effect(() => {
       const disposeSheet = applyForScope(undefined);
       return () => disposeSheet();
-    }, "dsh-wide-chat: settings-driven stylesheet (no scope)");
+    }, "dsh-widechat: settings-driven stylesheet (no scope)");
   }
 
   // The settings row.

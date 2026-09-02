@@ -1,11 +1,11 @@
 /**
- * Settings row dictionaries for the `dsh-wide-chat` General page entry.
+ * Settings row dictionaries for the `dsh-widechat` General page entry.
  * The shell ships zh and en; a key missing from one falls back to the
  * other, so both are kept complete.
  *
- * @module dsh-wide-chat/client/locales
+ * @module dsh-widechat/client/locales
  */
-export const WIDE_CHAT_LOCALE_NS = "settings.wide-chat";
+export const WIDE_CHAT_LOCALE_NS = "settings.widechat";
 
 /** Simplified Chinese dictionary (the key-set source of truth). */
 const zh = {

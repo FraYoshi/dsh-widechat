@@ -1,5 +1,5 @@
 /**
- * Build the CSS override string for the `dsh-wide-chat` plugin from a
+ * Build the CSS override string for the `dsh-widechat` plugin from a
  * settings snapshot. The two configurable knobs are `chatGutterPct`
  * (a percentage of the cell width on each side) and `statsAlign`
  * (where the session-stats strip lines up under the composer).

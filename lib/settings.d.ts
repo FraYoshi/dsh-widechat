@@ -6,10 +6,10 @@
  * runtime `require()` of any package not in the loader's table fails the
  * whole Web UI.
  *
- * @module dsh-wide-chat/settings
+ * @module dsh-widechat/settings
  */
 /** Settings namespace owned by this plugin. */
-export declare const WIDE_CHAT_SETTINGS_NAMESPACE = "dsh-wide-chat";
+export declare const WIDE_CHAT_SETTINGS_NAMESPACE = "dsh-widechat";
 /** Field key for the chat column horizontal gutter, in percent of the cell. */
 export declare const CHAT_GUTTER_PCT_FIELD = "chatGutterPct";
 /** Field key for the session-stats alignment. */

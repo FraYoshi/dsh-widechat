@@ -1,4 +1,4 @@
-# @furayoshi/dsh-wide-chat
+# @furayoshi/dsh-widechat
 
 A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin that widens the conversation column past the shipped 748px cap, with a configurable gutter on each side and a right-aligned session stats strip. Adds a settings row to the General page so the user can tune both without restarting DSH.
 
@@ -6,10 +6,11 @@ A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin tha
 
 The shipped DSH web UI caps the chat content at `--dsh-chat-content-width: 748px` and centers the column with `margin: 0 auto`. On any monitor wider than ~1024px this leaves large empty gutters on both sides and a narrow reading area. This plugin replaces the cap with `100% − 2 × chatGutterPct%` of the conversation root — so the column is sized to leave the configured gutter on each side — and right-aligns the session stats strip (token counts, duration, etc.) that ships centered under the composer.
 
-A small row in the **General** settings page lets the user tune two values:
+A small row in the **General** settings page lets the user tune three values:
 
 - **Chat column gutter** — a slider, 0–10% of the cell on each side. The shipped default is `1 %`.
 - **Session-stats alignment** — a three-way toggle (left / center / right). The shipped default is `right`.
+- **Your message bubble width** — a slider, 30–100% of the chat column. The shipped default is `75 %`. The user bubble is right-aligned; the rest of the conversation fills the column.
 
 Invalid values are soft-failed to the defaults with a `console.warn`; the page never breaks.
 
@@ -17,7 +18,7 @@ Invalid values are soft-failed to the defaults with a `console.warn`; the page n
 
 ```sh
 # Inside the profile directory (where cordis.patch.yml lives):
-pnpm add @furayoshi/dsh-wide-chat
+pnpm add @furayoshi/dsh-widechat
 ```
 
 DSH picks the package up automatically on the next `dsh` start because `dsh.client` is declared in the `package.json`. No preset row or `cordis.patch.yml` edit is required.
@@ -40,7 +41,7 @@ DSH's shipped `.Md3f7G_column` rule is left untouched: `width: 100%`, `max-width
 
 The plugin is two halves:
 
-- **Host** (`lib/index.js`) registers a settings namespace `dsh-wide-chat` with a `z.object` schema (`chatGutterPct`, `statsAlign`).
+- **Host** (`lib/index.js`) registers a settings namespace `dsh-widechat` with a `z.object` schema (`chatGutterPct`, `statsAlign`, `userBubblePct`).
 - **Client** (`lib/client/index.js`) binds a `SettingsScope` to that namespace, re-injects the CSS override on every change, and registers a row into the `settings.general.item` slot.
 
 ### Why this is so small
@@ -51,12 +52,13 @@ DSH's shipped chat column is already well-designed — it just caps at 748px. Th
 
 ## Configuration
 
-The two settings live in the `dsh-wide-chat` settings namespace. They can also be edited directly in the user's settings document if the npm install flow is bypassed (see the package's `cordis.patch.yml` and the host-side schema in `src/index.ts` for the canonical field names and bounds).
+The three settings live in the `dsh-widechat` settings namespace. They can also be edited directly in the user's settings document if the npm install flow is bypassed (see the package's `cordis.patch.yml` and the host-side schema in `src/index.ts` for the canonical field names and bounds).
 
 | Field | Type | Default | Range / values |
 |---|---|---|---|
 | `chatGutterPct` | number | `1` | 0–10 (clamped; integers) |
 | `statsAlign` | string | `"right"` | `"left"`, `"center"`, `"right"` |
+| `userBubblePct` | number | `75` | 30–100 (clamped; integers) |
 
 Invalid values are dropped to the defaults and a `console.warn` is logged with the offending field name. The page never refuses to render.
 

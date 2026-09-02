@@ -1,5 +1,5 @@
 /**
- * Self-drawn styles for the `dsh-wide-chat` settings row. The shipped
+ * Self-drawn styles for the `dsh-widechat` settings row. The shipped
  * `settings.general.item` outlet does not project a `className`; the row
  * owns its internals. Class names are scoped with the `dswc-` prefix to
  * avoid collisions with any other plugin that ships its own row CSS.

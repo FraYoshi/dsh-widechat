@@ -1,5 +1,5 @@
 /**
- * The `dsh-wide-chat` row in the General settings page. Renders three
+ * The `dsh-widechat` row in the General settings page. Renders three
  * controls:
  *   • a slider + number input for `chatGutterPct`
  *   • a 3-segment toggle for `statsAlign` (left / center / right)
@@ -133,7 +133,7 @@ export function WideChatRow({ scope, t }: WideChatRowProps): ReactNode {
   );
 
   return (
-    <div className="dswc-row" data-plugin="dsh-wide-chat" data-tick={tick}>
+    <div className="dswc-row" data-plugin="dsh-widechat" data-tick={tick}>
       <div className="dswc-row__head">
         <div className="dswc-row__title">{t("row.title")}</div>
         <div className="dswc-row__desc">{t("row.description")}</div>
