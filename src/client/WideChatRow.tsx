@@ -1,18 +1,17 @@
 /**
- * The `dsh-wide-chat` row in the General settings page. Renders three
+ * The `dsh-wide-chat` row in the General settings page. Renders two
  * controls:
  *   • a slider for `chatGutterPct`
  *   • a 3-segment toggle for `statsAlign` (left / center / right)
- *   • a checkbox for `preserveGutterWhenSidebarCollapsed`
  *
- * Reads the current values from the bound SettingsScope snapshot and writes
- * back through `scope.set` / `scope.unset`. No local store mirror; the
- * scope is the only source of truth.
+ * Reads the current values from the bound SettingsScope snapshot and
+ * writes back through `scope.set`. No local store mirror; the scope
+ * is the only source of truth.
  *
  * The scope object's runtime type is `SettingsScope<any>` from
- * `@deepseek-ai/dsh-client-runtime/client`; we keep this file free of
- * runtime imports of that package so the bundle's external list stays
- * tight (and a type-only import is erased at build time).
+ * `@deepseek-ai/dsh-client-runtime/client`; we keep this file free
+ * of runtime imports of that package so the bundle's external list
+ * stays tight (and a type-only import is erased at build time).
  */
 import { useCallback } from "react";
 import type { ReactNode } from "react";
@@ -21,7 +20,6 @@ import {
   CHAT_GUTTER_PCT_MAX,
   CHAT_GUTTER_PCT_MIN,
   DEFAULTS,
-  PRESERVE_GUTTER_WHEN_SIDEBAR_COLLAPSED_FIELD,
   STATS_ALIGN_FIELD,
   STATS_ALIGN_VALUES,
 } from "../settings.js";
@@ -72,11 +70,6 @@ export function WideChatRow({ scope, t }: WideChatRowProps): ReactNode {
   const statsAlign = (STATS_ALIGN_VALUES as readonly string[]).includes(statsAlignRaw)
     ? (statsAlignRaw as "left" | "center" | "right")
     : DEFAULTS[STATS_ALIGN_FIELD];
-  const preserveGutter = readField<boolean>(
-    section,
-    PRESERVE_GUTTER_WHEN_SIDEBAR_COLLAPSED_FIELD,
-    DEFAULTS[PRESERVE_GUTTER_WHEN_SIDEBAR_COLLAPSED_FIELD],
-  );
 
   const setGutter = useCallback(
     (next: number) => {
@@ -87,16 +80,6 @@ export function WideChatRow({ scope, t }: WideChatRowProps): ReactNode {
   const setAlign = useCallback(
     (next: string) => {
       void scope.set(STATS_ALIGN_FIELD, next);
-    },
-    [scope],
-  );
-  const setPreserve = useCallback(
-    (next: boolean) => {
-      if (next) {
-        void scope.set(PRESERVE_GUTTER_WHEN_SIDEBAR_COLLAPSED_FIELD, true);
-      } else {
-        void scope.unset(PRESERVE_GUTTER_WHEN_SIDEBAR_COLLAPSED_FIELD);
-      }
     },
     [scope],
   );
@@ -139,19 +122,6 @@ export function WideChatRow({ scope, t }: WideChatRowProps): ReactNode {
             </button>
           ))}
         </div>
-      </div>
-
-      <div className="dswc-row__field">
-        <div className="dswc-row__toggle">
-          <input
-            id="dswc-preserve"
-            type="checkbox"
-            checked={preserveGutter}
-            onChange={(event) => setPreserve(event.target.checked)}
-          />
-          <label htmlFor="dswc-preserve">{t("preserveGutter.label")}</label>
-        </div>
-        <div className="dswc-help">{t("preserveGutter.help")}</div>
       </div>
     </div>
   );

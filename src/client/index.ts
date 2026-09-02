@@ -17,7 +17,6 @@
 import {
   CHAT_GUTTER_PCT_FIELD,
   DEFAULTS,
-  PRESERVE_GUTTER_WHEN_SIDEBAR_COLLAPSED_FIELD,
   STATS_ALIGN_FIELD,
   WIDE_CHAT_SETTINGS_NAMESPACE,
 } from "../settings.js";
@@ -70,9 +69,8 @@ function installRowStyles(): () => void {
  */
 function applyForScope(scopeValue: unknown): () => void {
   const resolved = resolveConfig(scopeValue, {
-    chatGutterPct: DEFAULTS[CHAT_GUTTER_PCT_FIELD] as number,
-    statsAlign: DEFAULTS[STATS_ALIGN_FIELD] as "left" | "center" | "right",
-    preserveGutterWhenSidebarCollapsed: DEFAULTS[PRESERVE_GUTTER_WHEN_SIDEBAR_COLLAPSED_FIELD] as boolean,
+    chatGutterPct: DEFAULTS[CHAT_GUTTER_PCT_FIELD],
+    statsAlign: DEFAULTS[STATS_ALIGN_FIELD],
   });
   if (resolved.fellBack) {
     // Soft warning — never block render. The user sees a console line that
@@ -115,11 +113,8 @@ export function apply(ctx: any): void {
 
   // Bind the scope and re-inject on changes.
   const scope = ctx.settingsScope.bind({ namespace: WIDE_CHAT_SETTINGS_NAMESPACE });
-  const setSheetFromScope = (snapshot: unknown) => {
-    return applyForScope(readSection(snapshot));
-  };
   ctx.effect(() => {
-    const disposeSheet = setSheetFromScope(scope.getSnapshot());
+    const disposeSheet = applyForScope(readSection(scope.getSnapshot()));
     const unsubscribe = scope.subscribe(() => {
       // The scope only re-renders the CSS, not the row — but the row reads
       // its own values from `scope.getSnapshot()` on every render, so the

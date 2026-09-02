@@ -1,16 +1,15 @@
 # @furayoshi/dsh-wide-chat
 
-A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin that widens the conversation column to a configurable gutter, right-aligns the session stats strip, and adds a settings-row UI to tune both. Built for the DSH client plugin slot `settings.general.item`.
+A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin that widens the conversation column past the shipped 748px cap, with a configurable gutter on each side and a right-aligned session stats strip. Adds a settings row to the General page so the user can tune both without restarting DSH.
 
 ## What it does
 
-The shipped web UI caps the chat content at `--dsh-chat-content-width: 748px` and centers the column with `margin: 0 auto`. On any monitor wider than ~1024 px, this leaves large empty gutters on both sides and an even more cramped reading area. This plugin replaces the cap with a configurable value, and right-aligns the session stats strip (token counts, duration, etc.) that ships centered under the composer.
+The shipped DSH web UI caps the chat content at `--dsh-chat-content-width: 748px` and centers the column with `margin: 0 auto`. On any monitor wider than ~1024px this leaves large empty gutters on both sides and a narrow reading area. This plugin replaces the cap with `100% − 2 × chatGutterPct%` of the conversation root — so the column is sized to leave the configured gutter on each side — and right-aligns the session stats strip (token counts, duration, etc.) that ships centered under the composer.
 
-A small row in the **General** settings page lets the user tune three values:
+A small row in the **General** settings page lets the user tune two values:
 
-- **Chat column gutter** — a slider, 0–10 % of the viewport on each side. The shipped default is `1 %`.
+- **Chat column gutter** — a slider, 0–10% of the cell on each side. The shipped default is `1 %`.
 - **Session-stats alignment** — a three-way toggle (left / center / right). The shipped default is `right`.
-- **Keep text width when sidebar collapses** — a checkbox. When on, the column is a fixed-width centered block, so toggling the sidebar slides the text sideways but never re-wraps the words. When off, the column grows into the freed space (the original behavior). The shipped default is on.
 
 Invalid values are soft-failed to the defaults with a `console.warn`; the page never breaks.
 
@@ -27,51 +26,37 @@ The plugin's source lives in `src/`. The shipped `lib/client/index.js` is built 
 
 ## How it works
 
-The plugin is two halves:
-
-- **Host** (`lib/index.js`) registers a settings namespace `dsh-wide-chat` with a `z.object` schema (`chatGutterPct`, `statsAlign`, `preserveGutterWhenSidebarCollapsed`).
-- **Client** (`lib/client/index.js`) binds a `SettingsScope` to that namespace, re-injects the CSS override on every change, and registers a row into the `settings.general.item` slot.
-
-The CSS override replaces the shipped `--dsh-chat-content-width` and `--dsh-composer-card-max-width` variables with a calc that fits the open-state cell, and pins the chat column + composer card to that width. The column is centered with `margin: 0 auto`; when the layout's center cell resizes (because the sidebar toggled), the column translates smoothly instead of reflowing.
+The override is intentionally minimal. It changes ONE custom property:
 
 ```css
 :root, .wSkVaW_root, [data-phase] {
-  --dsh-chat-content-width:    calc(100vw - 280px - 64px - 12px - 2vw) !important;
-  --dsh-composer-card-max-width: calc(100vw - 280px - 64px - 12px - 2vw) !important;
+  --dsh-chat-content-width: calc(100% - 2%) !important;        /* gutterPct × 2 */
+  --dsh-composer-card-max-width: calc(100% - 2%) !important;
 }
-.Md3f7G_column {
-  max-width: var(--dsh-chat-content-width) !important;
-  width:     var(--dsh-chat-content-width) !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-.uV2eYG_card, .uV2eYG_notice, .wSkVaW_composerHero {
-  max-width: var(--dsh-composer-card-max-width) !important;
-  width: 100% !important;
-}
-.uV2eYG_root { align-items: center !important; }
-.FJxK0a_root { text-align: right !important; }
+.FJxK0a_root { text-align: right !important; }                  /* or left/center */
 ```
 
-The values `64px` and `12px` in the formula are the conversation scroll's left+right padding (`16 + 16 + composer-side-clearance` and the right-rail/details width respectively). The `280px` is the shipped expanded-sidebar width. All three are constants; see "Caveats" for the impact of upstream layout changes.
+DSH's shipped `.Md3f7G_column` rule is left untouched: `width: 100%`, `max-width: var(--dsh-chat-content-width)`, `margin: 0 auto`. That means the column is **the DSH default** — it reflows on sidebar toggle, it scales with the window, it scrolls the same way. The only change is the cap.
 
-### Why a fixed-width column, not `width: 100%`?
+The plugin is two halves:
 
-A naive `width: 100%` on the column makes it follow the center-cell width, which grows when the sidebar collapses. The user sees the text re-wrap on every toggle. A `width: var(--dsh-chat-content-width)` with `margin: 0 auto` keeps the column at the same pixel width in both states; the cell resizes around it, and the column translates sideways as a single block. The visible gutter is `(cellWidth − columnWidth) / 2` on each side, which is the configured `chatGutterPct vw` in the open state and a larger value when the sidebar is collapsed (the trade-off is described under "Caveats").
+- **Host** (`lib/index.js`) registers a settings namespace `dsh-wide-chat` with a `z.object` schema (`chatGutterPct`, `statsAlign`).
+- **Client** (`lib/client/index.js`) binds a `SettingsScope` to that namespace, re-injects the CSS override on every change, and registers a row into the `settings.general.item` slot.
 
-### Why a settings row in `settings.general.item`?
+### Why this is so small
 
-DSH already ships a settings UI that exposes preference rows for the locale (`Language`), the theme (`Appearance`), and the conversation composer (`Composer Enter`). The slot `settings.general.item` is the additive seat for one more preference. Registering a row there puts the plugin in the same place as every other built-in toggle, so the user does not have to learn a new place to find the controls.
+Earlier iterations of this plugin tried to keep the column at a fixed pixel width so toggling the sidebar would not reflow the words. That turned out to be unworkable: the column was either too narrow on small viewports, or it overflowed the cell, or it reflowed anyway because the cell width changes with the sidebar. Trying to out-clever the layout made reading worse.
+
+DSH's shipped chat column is already well-designed — it just caps at 748px. This plugin widens that cap, and nothing else. Toggle, scroll, resize — all the DSH default behavior you already know.
 
 ## Configuration
 
-The three settings live in the `dsh-wide-chat` settings namespace. They can also be edited directly in the user's settings document if the npm install flow is bypassed (see the package's `cordis.patch.yml` and the host-side schema in `src/index.ts` for the canonical field names and bounds).
+The two settings live in the `dsh-wide-chat` settings namespace. They can also be edited directly in the user's settings document if the npm install flow is bypassed (see the package's `cordis.patch.yml` and the host-side schema in `src/index.ts` for the canonical field names and bounds).
 
 | Field | Type | Default | Range / values |
 |---|---|---|---|
 | `chatGutterPct` | number | `1` | 0–10 (clamped; integers) |
 | `statsAlign` | string | `"right"` | `"left"`, `"center"`, `"right"` |
-| `preserveGutterWhenSidebarCollapsed` | boolean | `true` | any boolean |
 
 Invalid values are dropped to the defaults and a `console.warn` is logged with the offending field name. The page never refuses to render.
 
@@ -79,23 +64,13 @@ Invalid values are dropped to the defaults and a `console.warn` is logged with t
 
 ### This plugin overrides internal CSS-module class hashes
 
-`.wSkVaW_root`, `.Md3f7G_column`, `.uV2eYG_card`, `.FJxK0a_root`, etc. are CSS-Modules-generated class names from `@deepseek-ai/dsh-client-ui-conversation`. Their hashes (the part after the underscore) are recomputed every time that package is rebuilt. Any release of `dsh-client-ui-conversation` can therefore silently break this plugin.
+`.wSkVaW_root`, `.Md3f7G_column`, `.uV2eYG_card`, `.FJxK0a_root`, etc. are CSS-Modules-generated class names from `@deepseek-ai/dsh-client-ui-conversation`. Their hashes (the part after the underscore) are recomputed every time that package is rebuilt. Any release of `dsh-client-ui-conversation` can therefore silently break this plugin — in particular, if the shipped `max-width: var(--dsh-chat-content-width)` rule on `.Md3f7G_column` changes shape, our override no longer reaches it.
 
-After upgrading `@deepseek-ai/dsh-client-ui-conversation`, check whether the chat column widens, the composer card resizes, and the stats line still right-aligns. If any of those regress, the upstream CSS-module hashes changed; see "Updating" below.
+After upgrading `@deepseek-ai/dsh-client-ui-conversation`, check whether the chat column widens and the stats line still aligns. If either regresses, the upstream CSS-module hashes changed; see "Updating" below.
 
-### Trade-off when the sidebar collapses (default `preserveGutterWhenSidebarCollapsed: true`)
+### The `chatGutterPct` is interpreted against the cell, not the viewport
 
-The column is sized for the **open-state** cell, which is the smaller of the two. In the collapsed state, the cell is wider, so the centered column has more whitespace on each side than the configured `chatGutterPct`. The user's reading width stays the same (no reflow); the visible right gutter is roughly:
-
-```
-gutter_collapsed ≈ (224px + 2 * chatGutterPct vw) / 2
-```
-
-For the shipped 1 % default on a 1920 px viewport, that's about 121 px on each side. Toggling `preserveGutterWhenSidebarCollapsed` to `false` keeps the column at `100 %` of the cell, so it grows when the sidebar collapses; words re-wrap on every transition. The default is `true`.
-
-### Layout constants are hard-coded
-
-The column-width formula `100vw − 280px − 64px − 12px − 2vw` assumes the shipped sidebar width (280 px), scroll padding (32 + 32 px), and details-rail width (12 px). If the user has resized their sidebar via the layout drag handle, the column will be slightly off-center; a future revision can read the live grid template at runtime if this becomes a problem.
+DSH's chat column is `width: 100%` of its cell. The plugin's cap is `100% - 2 × chatGutterPct%`, where the percentage is of the cell. So `chatGutterPct: 1` means "leave 1% of the cell on each side as a gutter", not 1% of the viewport. With the sidebar open the cell is small, so the gutter is small in absolute pixels. With the sidebar closed the cell is wider, so the gutter is wider in pixels but still the same percentage. This is the DSH default behavior — preserved on purpose so the column reflows smoothly when the sidebar toggles.
 
 ### Updating
 

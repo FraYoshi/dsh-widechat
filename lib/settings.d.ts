@@ -14,8 +14,6 @@ export declare const WIDE_CHAT_SETTINGS_NAMESPACE = "dsh-wide-chat";
 export declare const CHAT_GUTTER_PCT_FIELD = "chatGutterPct";
 /** Field key for the session-stats alignment. */
 export declare const STATS_ALIGN_FIELD = "statsAlign";
-/** Field key for "keep gutter constant when sidebar collapses". */
-export declare const PRESERVE_GUTTER_WHEN_SIDEBAR_COLLAPSED_FIELD = "preserveGutterWhenSidebarCollapsed";
 /** Allowed values for `statsAlign`. */
 export declare const STATS_ALIGN_VALUES: readonly ["left", "center", "right"];
 export type StatsAlign = (typeof STATS_ALIGN_VALUES)[number];
@@ -26,5 +24,4 @@ export declare const CHAT_GUTTER_PCT_MAX = 10;
 export declare const DEFAULTS: {
     readonly chatGutterPct: 1;
     readonly statsAlign: "right";
-    readonly preserveGutterWhenSidebarCollapsed: true;
 };

@@ -21,7 +21,6 @@ import {
   CHAT_GUTTER_PCT_FIELD,
   CHAT_GUTTER_PCT_MAX,
   CHAT_GUTTER_PCT_MIN,
-  PRESERVE_GUTTER_WHEN_SIDEBAR_COLLAPSED_FIELD,
   STATS_ALIGN_FIELD,
   STATS_ALIGN_VALUES,
   WIDE_CHAT_SETTINGS_NAMESPACE,
@@ -40,7 +39,6 @@ export const WideChatSettingsSchema = z.object({
     .max(CHAT_GUTTER_PCT_MAX)
     .required(false),
   [STATS_ALIGN_FIELD]: z.union(STATS_ALIGN_VALUES as unknown as [string, ...string[]]).required(false),
-  [PRESERVE_GUTTER_WHEN_SIDEBAR_COLLAPSED_FIELD]: z.boolean().required(false),
 });
 
 /** Host plugin body. Registers the namespace with the host settings service. */
@@ -57,7 +55,6 @@ export {
   WIDE_CHAT_SETTINGS_NAMESPACE,
   CHAT_GUTTER_PCT_FIELD,
   STATS_ALIGN_FIELD,
-  PRESERVE_GUTTER_WHEN_SIDEBAR_COLLAPSED_FIELD,
   STATS_ALIGN_VALUES,
   CHAT_GUTTER_PCT_MIN,
   CHAT_GUTTER_PCT_MAX,

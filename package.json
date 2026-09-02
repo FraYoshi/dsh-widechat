@@ -1,6 +1,6 @@
 {
   "name": "@furayoshi/dsh-wide-chat",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "DeepSeek Harness plugin: widens the conversation column to a configurable gutter, right-aligns the session stats strip, with a settings-row UI to tune both. Built for the DSH client plugin slot `settings.general.item`.",
   "type": "module",
   "main": "lib/index.js",
