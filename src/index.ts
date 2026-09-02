@@ -23,6 +23,9 @@ import {
   CHAT_GUTTER_PCT_MIN,
   STATS_ALIGN_FIELD,
   STATS_ALIGN_VALUES,
+  USER_BUBBLE_PCT_FIELD,
+  USER_BUBBLE_PCT_MAX,
+  USER_BUBBLE_PCT_MIN,
   WIDE_CHAT_SETTINGS_NAMESPACE,
 } from "./settings.js";
 
@@ -39,6 +42,11 @@ export const WideChatSettingsSchema = z.object({
     .max(CHAT_GUTTER_PCT_MAX)
     .required(false),
   [STATS_ALIGN_FIELD]: z.union(STATS_ALIGN_VALUES as unknown as [string, ...string[]]).required(false),
+  [USER_BUBBLE_PCT_FIELD]: z
+    .number()
+    .min(USER_BUBBLE_PCT_MIN)
+    .max(USER_BUBBLE_PCT_MAX)
+    .required(false),
 });
 
 /** Host plugin body. Registers the namespace with the host settings service. */
@@ -58,5 +66,8 @@ export {
   STATS_ALIGN_VALUES,
   CHAT_GUTTER_PCT_MIN,
   CHAT_GUTTER_PCT_MAX,
+  USER_BUBBLE_PCT_FIELD,
+  USER_BUBBLE_PCT_MIN,
+  USER_BUBBLE_PCT_MAX,
   DEFAULTS,
 } from "./settings.js";

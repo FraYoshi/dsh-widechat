@@ -1,17 +1,18 @@
 /**
- * The `dsh-wide-chat` row in the General settings page. Renders two
+ * The `dsh-wide-chat` row in the General settings page. Renders three
  * controls:
  *   • a slider for `chatGutterPct`
  *   • a 3-segment toggle for `statsAlign` (left / center / right)
+ *   • a slider for `userBubblePct`
  *
  * Reads the current values from the bound SettingsScope snapshot and
  * writes back through `scope.set`. No local store mirror; the scope
  * is the only source of truth.
  *
  * The scope object's runtime type is `SettingsScope<any>` from
- * `@deepseek-ai/dsh-client-runtime/client`; we keep this file free
- * of runtime imports of that package so the bundle's external list
- * stays tight (and a type-only import is erased at build time).
+ * `@deepseek-ai/dsh-client-runtime/client`; we keep this file free of
+ * runtime imports of that package so the bundle's external list stays
+ * tight (and a type-only import is erased at build time).
  */
 import { useCallback } from "react";
 import type { ReactNode } from "react";
@@ -22,6 +23,9 @@ import {
   DEFAULTS,
   STATS_ALIGN_FIELD,
   STATS_ALIGN_VALUES,
+  USER_BUBBLE_PCT_FIELD,
+  USER_BUBBLE_PCT_MAX,
+  USER_BUBBLE_PCT_MIN,
 } from "../settings.js";
 
 /**
@@ -50,13 +54,16 @@ function readField<T>(section: unknown, field: string, fallback: T): T {
   return value === undefined ? fallback : (value as T);
 }
 
-function clampGutter(value: number): number {
-  if (typeof value !== "number" || !Number.isFinite(value)) {
-    return DEFAULTS[CHAT_GUTTER_PCT_FIELD];
-  }
+function clampNumber(
+  value: number,
+  min: number,
+  max: number,
+  fallback: number,
+): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return fallback;
   const rounded = Math.round(value);
-  if (rounded < CHAT_GUTTER_PCT_MIN) return CHAT_GUTTER_PCT_MIN;
-  if (rounded > CHAT_GUTTER_PCT_MAX) return CHAT_GUTTER_PCT_MAX;
+  if (rounded < min) return min;
+  if (rounded > max) return max;
   return rounded;
 }
 
@@ -65,11 +72,18 @@ export function WideChatRow({ scope, t }: WideChatRowProps): ReactNode {
   const section = snapshot.value;
 
   const gutterRaw = readField<number>(section, CHAT_GUTTER_PCT_FIELD, DEFAULTS[CHAT_GUTTER_PCT_FIELD]);
-  const gutterPct = clampGutter(gutterRaw);
+  const gutterPct = clampNumber(gutterRaw, CHAT_GUTTER_PCT_MIN, CHAT_GUTTER_PCT_MAX, DEFAULTS[CHAT_GUTTER_PCT_FIELD]);
   const statsAlignRaw = readField<string>(section, STATS_ALIGN_FIELD, DEFAULTS[STATS_ALIGN_FIELD]);
   const statsAlign = (STATS_ALIGN_VALUES as readonly string[]).includes(statsAlignRaw)
     ? (statsAlignRaw as "left" | "center" | "right")
     : DEFAULTS[STATS_ALIGN_FIELD];
+  const userBubbleRaw = readField<number>(section, USER_BUBBLE_PCT_FIELD, DEFAULTS[USER_BUBBLE_PCT_FIELD]);
+  const userBubblePct = clampNumber(
+    userBubbleRaw,
+    USER_BUBBLE_PCT_MIN,
+    USER_BUBBLE_PCT_MAX,
+    DEFAULTS[USER_BUBBLE_PCT_FIELD],
+  );
 
   const setGutter = useCallback(
     (next: number) => {
@@ -80,6 +94,12 @@ export function WideChatRow({ scope, t }: WideChatRowProps): ReactNode {
   const setAlign = useCallback(
     (next: string) => {
       void scope.set(STATS_ALIGN_FIELD, next);
+    },
+    [scope],
+  );
+  const setUserBubble = useCallback(
+    (next: number) => {
+      void scope.set(USER_BUBBLE_PCT_FIELD, next);
     },
     [scope],
   );
@@ -122,6 +142,23 @@ export function WideChatRow({ scope, t }: WideChatRowProps): ReactNode {
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="dswc-row__field">
+        <label htmlFor="dswc-user-bubble">{t("userBubble.label")}</label>
+        <div className="dswc-row__slider">
+          <input
+            id="dswc-user-bubble"
+            type="range"
+            min={USER_BUBBLE_PCT_MIN}
+            max={USER_BUBBLE_PCT_MAX}
+            step={1}
+            value={userBubblePct}
+            onChange={(event) => setUserBubble(Number(event.target.value))}
+          />
+          <span className="dswc-row__value">{userBubblePct}%</span>
+        </div>
+        <div className="dswc-help">{t("userBubble.help")}</div>
       </div>
     </div>
   );

@@ -18,6 +18,7 @@ import {
   CHAT_GUTTER_PCT_FIELD,
   DEFAULTS,
   STATS_ALIGN_FIELD,
+  USER_BUBBLE_PCT_FIELD,
   WIDE_CHAT_SETTINGS_NAMESPACE,
 } from "../settings.js";
 import { WideChatRow } from "./WideChatRow";
@@ -71,6 +72,7 @@ function applyForScope(scopeValue: unknown): () => void {
   const resolved = resolveConfig(scopeValue, {
     chatGutterPct: DEFAULTS[CHAT_GUTTER_PCT_FIELD],
     statsAlign: DEFAULTS[STATS_ALIGN_FIELD],
+    userBubblePct: DEFAULTS[USER_BUBBLE_PCT_FIELD],
   });
   if (resolved.fellBack) {
     // Soft warning — never block render. The user sees a console line that

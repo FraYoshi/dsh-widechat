@@ -22,10 +22,18 @@ import {
   CHAT_GUTTER_PCT_MAX,
   CHAT_GUTTER_PCT_MIN,
   STATS_ALIGN_FIELD,
+  USER_BUBBLE_PCT_FIELD,
+  USER_BUBBLE_PCT_MAX,
+  USER_BUBBLE_PCT_MIN,
 } from "../settings.js";
 
 /** Re-exported for the row's slider min/max. */
-export { CHAT_GUTTER_PCT_MIN, CHAT_GUTTER_PCT_MAX };
+export {
+  CHAT_GUTTER_PCT_MIN,
+  CHAT_GUTTER_PCT_MAX,
+  USER_BUBBLE_PCT_MIN,
+  USER_BUBBLE_PCT_MAX,
+};
 
 /** Validate and clamp a single field. Returns `fallback` on any deviation. */
 function clampInt(value: unknown, min: number, max: number, fallback: number): number {
@@ -44,6 +52,7 @@ function asAlign(value: unknown, fallback: "left" | "center" | "right"): "left" 
 export interface ResolvedConfig {
   chatGutterPct: number;
   statsAlign: "left" | "center" | "right";
+  userBubblePct: number;
   /** Whether any field fell back from the input. Used for soft warnings. */
   fellBack: boolean;
   /** Reasons we fell back, in stable order. */
@@ -53,6 +62,7 @@ export interface ResolvedConfig {
 export function resolveConfig(raw: unknown, defaults: {
   chatGutterPct: number;
   statsAlign: "left" | "center" | "right";
+  userBubblePct: number;
 }): ResolvedConfig {
   const fallbacks: string[] = [];
   let section: Record<string, unknown> = {};
@@ -64,6 +74,7 @@ export function resolveConfig(raw: unknown, defaults: {
 
   const chatGutterPctInput = section[CHAT_GUTTER_PCT_FIELD] ?? defaults.chatGutterPct;
   const statsAlignInput = section[STATS_ALIGN_FIELD] ?? defaults.statsAlign;
+  const userBubblePctInput = section[USER_BUBBLE_PCT_FIELD] ?? defaults.userBubblePct;
 
   const chatGutterPctRaw = clampInt(
     chatGutterPctInput,
@@ -80,9 +91,20 @@ export function resolveConfig(raw: unknown, defaults: {
     fallbacks.push(`${STATS_ALIGN_FIELD}=${JSON.stringify(statsAlignInput)}`);
   }
 
+  const userBubblePctRaw = clampInt(
+    userBubblePctInput,
+    USER_BUBBLE_PCT_MIN,
+    USER_BUBBLE_PCT_MAX,
+    defaults.userBubblePct,
+  );
+  if (userBubblePctRaw !== userBubblePctInput) {
+    fallbacks.push(`${USER_BUBBLE_PCT_FIELD}=${JSON.stringify(userBubblePctInput)}`);
+  }
+
   return {
     chatGutterPct: chatGutterPctRaw,
     statsAlign: statsAlignRaw,
+    userBubblePct: userBubblePctRaw,
     fellBack: fallbacks.length > 0,
     fallbacks,
   };
@@ -107,6 +129,7 @@ export function resolveConfig(raw: unknown, defaults: {
 export function buildStylesheet(config: ResolvedConfig): string {
   const g = config.chatGutterPct;
   const cap = `calc(100% - ${g * 2}%)`;
+  const ub = `${config.userBubblePct}%`;
 
   return `
 :root,
@@ -114,6 +137,16 @@ export function buildStylesheet(config: ResolvedConfig): string {
 [data-phase] {
   --dsh-chat-content-width: ${cap} !important;
   --dsh-composer-card-max-width: ${cap} !important;
+}
+
+/* User-message bubble width. The shipped cap is
+ * max-width: min(525px, 82%), which keeps user bubbles narrow on wide
+ * columns. We replace the cap with the configured userBubblePct of
+ * the chat column, so the bubble scales with the column. The shipped
+ * align-items: flex-end on .gdEzaW_userRow keeps the bubble pinned
+ * to the right edge. */
+.gdEzaW_userStack {
+  max-width: ${ub} !important;
 }
 
 .FJxK0a_root {
