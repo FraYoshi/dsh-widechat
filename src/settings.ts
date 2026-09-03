@@ -18,6 +18,8 @@ export const CHAT_GUTTER_PCT_FIELD = "chatGutterPct";
 export const STATS_ALIGN_FIELD = "statsAlign";
 /** Field key for the user-bubble width, in percent of the chat column. */
 export const USER_BUBBLE_PCT_FIELD = "userBubblePct";
+/** Field key for the composer-card max height, in percent of the viewport. */
+export const COMPOSER_MAX_HEIGHT_PCT_FIELD = "composerMaxHeightPct";
 
 /** Allowed values for `statsAlign`. */
 export const STATS_ALIGN_VALUES = ["left", "center", "right"] as const;
@@ -31,9 +33,14 @@ export const CHAT_GUTTER_PCT_MAX = 10;
 export const USER_BUBBLE_PCT_MIN = 30;
 export const USER_BUBBLE_PCT_MAX = 100;
 
+/** Hard limits for the composer-card max-height percentage. */
+export const COMPOSER_MAX_HEIGHT_PCT_MIN = 20;
+export const COMPOSER_MAX_HEIGHT_PCT_MAX = 80;
+
 /** Defaults applied when a field is unset. */
 export const DEFAULTS = {
   [CHAT_GUTTER_PCT_FIELD]: 1,
   [STATS_ALIGN_FIELD]: "right",
   [USER_BUBBLE_PCT_FIELD]: 75,
+  [COMPOSER_MAX_HEIGHT_PCT_FIELD]: 50,
 } as const;

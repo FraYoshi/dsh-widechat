@@ -16,6 +16,7 @@
  */
 import {
   CHAT_GUTTER_PCT_FIELD,
+  COMPOSER_MAX_HEIGHT_PCT_FIELD,
   DEFAULTS,
   STATS_ALIGN_FIELD,
   USER_BUBBLE_PCT_FIELD,
@@ -73,6 +74,7 @@ function applyForScope(scopeValue: unknown): () => void {
     chatGutterPct: DEFAULTS[CHAT_GUTTER_PCT_FIELD],
     statsAlign: DEFAULTS[STATS_ALIGN_FIELD],
     userBubblePct: DEFAULTS[USER_BUBBLE_PCT_FIELD],
+    composerMaxHeightPct: DEFAULTS[COMPOSER_MAX_HEIGHT_PCT_FIELD],
   });
   if (resolved.fellBack) {
     // Soft warning — never block render. The user sees a console line that

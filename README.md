@@ -6,11 +6,12 @@ A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin tha
 
 The shipped DSH web UI caps the chat content at `--dsh-chat-content-width: 748px` and centers the column with `margin: 0 auto`. On any monitor wider than ~1024px this leaves large empty gutters on both sides and a narrow reading area. This plugin replaces the cap with `100% − 2 × chatGutterPct%` of the conversation root — so the column is sized to leave the configured gutter on each side — and right-aligns the session stats strip (token counts, duration, etc.) that ships centered under the composer.
 
-A small row in the **General** settings page lets the user tune three values:
+A small row in the **General** settings page lets the user tune four values:
 
 - **Chat column gutter** — a slider, 0–10% of the cell on each side. The shipped default is `1 %`.
 - **Session-stats alignment** — a three-way toggle (left / center / right). The shipped default is `right`.
 - **Your message bubble width** — a slider, 30–100% of the chat column. The shipped default is `75 %`. The user bubble is right-aligned; the rest of the conversation fills the column.
+- **Composer max height** — a slider, 20–80% of the viewport. The shipped default is `50 %`. Caps the input card so long messages do not hide the conversation above.
 
 Invalid values are soft-failed to the defaults with a `console.warn`; the page never breaks.
 
@@ -41,7 +42,7 @@ DSH's shipped `.Md3f7G_column` rule is left untouched: `width: 100%`, `max-width
 
 The plugin is two halves:
 
-- **Host** (`lib/index.js`) registers a settings namespace `dsh-widechat` with a `z.object` schema (`chatGutterPct`, `statsAlign`, `userBubblePct`).
+- **Host** (`lib/index.js`) registers a settings namespace `dsh-widechat` with a `z.object` schema (`chatGutterPct`, `statsAlign`, `userBubblePct`, `composerMaxHeightPct`).
 - **Client** (`lib/client/index.js`) binds a `SettingsScope` to that namespace, re-injects the CSS override on every change, and registers a row into the `settings.general.item` slot.
 
 ### Why this is so small
@@ -52,13 +53,14 @@ DSH's shipped chat column is already well-designed — it just caps at 748px. Th
 
 ## Configuration
 
-The three settings live in the `dsh-widechat` settings namespace. They can also be edited directly in the user's settings document if the npm install flow is bypassed (see the package's `cordis.patch.yml` and the host-side schema in `src/index.ts` for the canonical field names and bounds).
+The four settings live in the `dsh-widechat` settings namespace. They can also be edited directly in the user's settings document if the npm install flow is bypassed (see the package's `cordis.patch.yml` and the host-side schema in `src/index.ts` for the canonical field names and bounds).
 
 | Field | Type | Default | Range / values |
 |---|---|---|---|
 | `chatGutterPct` | number | `1` | 0–10 (clamped; integers) |
 | `statsAlign` | string | `"right"` | `"left"`, `"center"`, `"right"` |
 | `userBubblePct` | number | `75` | 30–100 (clamped; integers) |
+| `composerMaxHeightPct` | number | `50` | 20–80 (clamped; integers) |
 
 Invalid values are dropped to the defaults and a `console.warn` is logged with the offending field name. The page never refuses to render.
 

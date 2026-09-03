@@ -21,6 +21,9 @@ import {
   CHAT_GUTTER_PCT_FIELD,
   CHAT_GUTTER_PCT_MAX,
   CHAT_GUTTER_PCT_MIN,
+  COMPOSER_MAX_HEIGHT_PCT_FIELD,
+  COMPOSER_MAX_HEIGHT_PCT_MAX,
+  COMPOSER_MAX_HEIGHT_PCT_MIN,
   STATS_ALIGN_FIELD,
   STATS_ALIGN_VALUES,
   USER_BUBBLE_PCT_FIELD,
@@ -47,6 +50,11 @@ export const WideChatSettingsSchema = z.object({
     .min(USER_BUBBLE_PCT_MIN)
     .max(USER_BUBBLE_PCT_MAX)
     .required(false),
+  [COMPOSER_MAX_HEIGHT_PCT_FIELD]: z
+    .number()
+    .min(COMPOSER_MAX_HEIGHT_PCT_MIN)
+    .max(COMPOSER_MAX_HEIGHT_PCT_MAX)
+    .required(false),
 });
 
 /** Host plugin body. Registers the namespace with the host settings service. */
@@ -69,5 +77,8 @@ export {
   USER_BUBBLE_PCT_FIELD,
   USER_BUBBLE_PCT_MIN,
   USER_BUBBLE_PCT_MAX,
+  COMPOSER_MAX_HEIGHT_PCT_FIELD,
+  COMPOSER_MAX_HEIGHT_PCT_MIN,
+  COMPOSER_MAX_HEIGHT_PCT_MAX,
   DEFAULTS,
 } from "./settings.js";

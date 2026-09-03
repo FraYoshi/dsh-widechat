@@ -1,9 +1,10 @@
 /**
- * The `dsh-widechat` row in the General settings page. Renders three
+ * The `dsh-widechat` row in the General settings page. Renders four
  * controls:
  *   • a slider + number input for `chatGutterPct`
  *   • a 3-segment toggle for `statsAlign` (left / center / right)
  *   • a slider + number input for `userBubblePct`
+ *   • a slider + number input for `composerMaxHeightPct`
  *
  * The row subscribes to its SettingsScope so the controls reflect the
  * current value on every change — without the subscription, React would
@@ -21,6 +22,9 @@ import {
   CHAT_GUTTER_PCT_FIELD,
   CHAT_GUTTER_PCT_MAX,
   CHAT_GUTTER_PCT_MIN,
+  COMPOSER_MAX_HEIGHT_PCT_FIELD,
+  COMPOSER_MAX_HEIGHT_PCT_MAX,
+  COMPOSER_MAX_HEIGHT_PCT_MIN,
   DEFAULTS,
   STATS_ALIGN_FIELD,
   STATS_ALIGN_VALUES,
@@ -73,6 +77,7 @@ interface ResolvedValues {
   gutterPct: number;
   statsAlign: "left" | "center" | "right";
   userBubblePct: number;
+  composerMaxHeightPct: number;
 }
 
 function readValues(scope: ScopeLike): ResolvedValues {
@@ -90,7 +95,14 @@ function readValues(scope: ScopeLike): ResolvedValues {
     USER_BUBBLE_PCT_MAX,
     DEFAULTS[USER_BUBBLE_PCT_FIELD],
   );
-  return { gutterPct, statsAlign, userBubblePct };
+  const composerMaxHeightRaw = readField<number>(section, COMPOSER_MAX_HEIGHT_PCT_FIELD, DEFAULTS[COMPOSER_MAX_HEIGHT_PCT_FIELD]);
+  const composerMaxHeightPct = clampNumber(
+    composerMaxHeightRaw,
+    COMPOSER_MAX_HEIGHT_PCT_MIN,
+    COMPOSER_MAX_HEIGHT_PCT_MAX,
+    DEFAULTS[COMPOSER_MAX_HEIGHT_PCT_FIELD],
+  );
+  return { gutterPct, statsAlign, userBubblePct, composerMaxHeightPct };
 }
 
 export function WideChatRow({ scope, t }: WideChatRowProps): ReactNode {
@@ -107,7 +119,7 @@ export function WideChatRow({ scope, t }: WideChatRowProps): ReactNode {
     };
   }, [scope]);
 
-  const { gutterPct, statsAlign, userBubblePct } = readValues(scope);
+  const { gutterPct, statsAlign, userBubblePct, composerMaxHeightPct } = readValues(scope);
 
   const setGutter = useCallback(
     (next: number) => {
@@ -128,6 +140,13 @@ export function WideChatRow({ scope, t }: WideChatRowProps): ReactNode {
     (next: number) => {
       const clamped = clampNumber(next, USER_BUBBLE_PCT_MIN, USER_BUBBLE_PCT_MAX, DEFAULTS[USER_BUBBLE_PCT_FIELD]);
       void scope.set(USER_BUBBLE_PCT_FIELD, clamped);
+    },
+    [scope],
+  );
+  const setComposerMaxHeight = useCallback(
+    (next: number) => {
+      const clamped = clampNumber(next, COMPOSER_MAX_HEIGHT_PCT_MIN, COMPOSER_MAX_HEIGHT_PCT_MAX, DEFAULTS[COMPOSER_MAX_HEIGHT_PCT_FIELD]);
+      void scope.set(COMPOSER_MAX_HEIGHT_PCT_FIELD, clamped);
     },
     [scope],
   );
@@ -213,6 +232,36 @@ export function WideChatRow({ scope, t }: WideChatRowProps): ReactNode {
           <span className="dswc-row__unit">%</span>
         </div>
         <div className="dswc-help">{t("userBubble.help")}</div>
+      </div>
+
+      <div className="dswc-row__field">
+        <label htmlFor="dswc-composer-max-height">{t("composerMaxHeight.label")}</label>
+        <div className="dswc-row__slider">
+          <input
+            id="dswc-composer-max-height"
+            type="range"
+            min={COMPOSER_MAX_HEIGHT_PCT_MIN}
+            max={COMPOSER_MAX_HEIGHT_PCT_MAX}
+            step={1}
+            value={composerMaxHeightPct}
+            onChange={(event) => setComposerMaxHeight(Number(event.target.value))}
+          />
+          <input
+            className="dswc-row__number"
+            type="number"
+            min={COMPOSER_MAX_HEIGHT_PCT_MIN}
+            max={COMPOSER_MAX_HEIGHT_PCT_MAX}
+            step={1}
+            value={composerMaxHeightPct}
+            aria-label={t("composerMaxHeight.label")}
+            onChange={(event) => {
+              const value = Number(event.target.value);
+              if (Number.isFinite(value)) setComposerMaxHeight(value);
+            }}
+          />
+          <span className="dswc-row__unit">vh</span>
+        </div>
+        <div className="dswc-help">{t("composerMaxHeight.help")}</div>
       </div>
     </div>
   );
