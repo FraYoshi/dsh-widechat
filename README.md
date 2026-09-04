@@ -2,9 +2,9 @@
 
 A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin that widens the conversation column past the shipped 748px cap, right-aligns the session stats strip, and caps the composer card so long inputs do not hide the conversation above. Adds a settings row to the General page so all of these can be tuned without restarting DSH.
 
-![wideview ui](media/wideview-ui.webp)
+![widechat ui](media/widechat-ui.webp)
 
-![wideview settings](media/wideview-settings.webp)
+![widechat settings](media/widechat-settings.webp)
 
 ## What it does
 
