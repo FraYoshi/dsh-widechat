@@ -2,6 +2,10 @@
 
 A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin that widens the conversation column past the shipped 748px cap, right-aligns the session stats strip, and caps the composer card so long inputs do not hide the conversation above. Adds a settings row to the General page so all of these can be tuned without restarting DSH.
 
+![wideview ui](media/wideview-ui.webp)
+
+![wideview settings](media/wideview-settings.webp)
+
 ## What it does
 
 The shipped DSH web UI caps the chat content at `--dsh-chat-content-width: 748px` and centers the column with `margin: 0 auto`. On any monitor wider than ~1024px this leaves large empty gutters on both sides and a narrow reading area. This plugin widens that cap to leave only the configured gutter, right-aligns the user-message bubble (the shipped default is narrow on wide viewports), and caps the composer card to a percentage of the viewport so long inputs do not eat the conversation above.
