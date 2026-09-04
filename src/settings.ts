@@ -33,9 +33,15 @@ export const CHAT_GUTTER_PCT_MAX = 10;
 export const USER_BUBBLE_PCT_MIN = 30;
 export const USER_BUBBLE_PCT_MAX = 100;
 
-/** Hard limits for the composer-card max-height percentage. */
+/** Hard limits for the composer-card max-height percentage.
+ * The shipped composer caps out at roughly 43vh on typical layouts (the
+ * conversation area keeps a sticky composer with internal scroll, and
+ * the parent has its own ceiling). The slider's effective range is
+ * 20–43 to match the hard cap; values above 43 are silently clamped by
+ * the layout, so capping the slider prevents the user from thinking
+ * they can go higher when they can't. */
 export const COMPOSER_MAX_HEIGHT_PCT_MIN = 20;
-export const COMPOSER_MAX_HEIGHT_PCT_MAX = 80;
+export const COMPOSER_MAX_HEIGHT_PCT_MAX = 43;
 
 /** Defaults applied when a field is unset. */
 export const DEFAULTS = {
