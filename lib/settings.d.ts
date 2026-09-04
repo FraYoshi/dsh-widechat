@@ -16,6 +16,8 @@ export declare const CHAT_GUTTER_PCT_FIELD = "chatGutterPct";
 export declare const STATS_ALIGN_FIELD = "statsAlign";
 /** Field key for the user-bubble width, in percent of the chat column. */
 export declare const USER_BUBBLE_PCT_FIELD = "userBubblePct";
+/** Field key for the composer-card max height, in percent of the viewport. */
+export declare const COMPOSER_MAX_HEIGHT_PCT_FIELD = "composerMaxHeightPct";
 /** Allowed values for `statsAlign`. */
 export declare const STATS_ALIGN_VALUES: readonly ["left", "center", "right"];
 export type StatsAlign = (typeof STATS_ALIGN_VALUES)[number];
@@ -25,9 +27,18 @@ export declare const CHAT_GUTTER_PCT_MAX = 10;
 /** Hard limits for the user-bubble percentage. */
 export declare const USER_BUBBLE_PCT_MIN = 30;
 export declare const USER_BUBBLE_PCT_MAX = 100;
+/** Hard limits for the composer-card max-height percentage.
+ * The shipped composer card has an implicit natural-height cap of around
+ * 43vh (textarea inner scroll capped at 336px + accessory + padding).
+ * This plugin also overrides the inner scroll so the user's cap
+ * actually takes effect; the slider range is therefore the full
+ * 20–80 the user can use, capped by viewport height. */
+export declare const COMPOSER_MAX_HEIGHT_PCT_MIN = 20;
+export declare const COMPOSER_MAX_HEIGHT_PCT_MAX = 80;
 /** Defaults applied when a field is unset. */
 export declare const DEFAULTS: {
     readonly chatGutterPct: 1;
     readonly statsAlign: "right";
     readonly userBubblePct: 75;
+    readonly composerMaxHeightPct: 50;
 };

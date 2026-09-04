@@ -23,7 +23,7 @@ If a saved value is out of range or of the wrong type, the plugin falls back to 
 
 DSH's `plugin` subcommand forwards pnpm commands into the profile directory and reconciles the profile's `dsh.profile.bundles` array against the installed packages. So `dsh plugin --profile web add <spec>` is the canonical install path: it runs `pnpm add <spec>`, then automatically appends the package to `bundles` if (and only if) the installed `package.json` declares a `dsh.bundle.patch` — which this package does.
 
-### From npm (after this repo is published)
+### From npmjs
 
 ```sh
 dsh plugin --profile web add @furayoshi/dsh-widechat
