@@ -11,7 +11,7 @@ A small row in the **General** settings page lets the user tune four values:
 - **Chat column gutter** — a slider, 0–10% of the cell on each side. The shipped default is `1 %`.
 - **Session-stats alignment** — a three-way toggle (left / center / right). The shipped default is `right`.
 - **Your message bubble width** — a slider, 30–100% of the chat column. The shipped default is `75 %`. The user bubble is right-aligned; the rest of the conversation fills the column.
-- **Composer max height** — a slider, 20–80% of the viewport. The shipped default is `50 %`. Caps the input card so long messages do not hide the conversation above.
+- **Composer max height** — a slider, 20–43% of the viewport. The shipped default is `50 %` (the layout caps the composer at roughly 43vh, so values above that have no effect). Caps the input card so long messages do not hide the conversation above.
 
 Invalid values are soft-failed to the defaults with a `console.warn`; the page never breaks.
 
@@ -60,7 +60,7 @@ The four settings live in the `dsh-widechat` settings namespace. They can also b
 | `chatGutterPct` | number | `1` | 0–10 (clamped; integers) |
 | `statsAlign` | string | `"right"` | `"left"`, `"center"`, `"right"` |
 | `userBubblePct` | number | `75` | 30–100 (clamped; integers) |
-| `composerMaxHeightPct` | number | `50` | 20–80 (clamped; integers) |
+| `composerMaxHeightPct` | number | `50` | 20–43 (clamped; integers) |
 
 Invalid values are dropped to the defaults and a `console.warn` is logged with the offending field name. The page never refuses to render.
 
