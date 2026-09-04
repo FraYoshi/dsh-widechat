@@ -1,6 +1,7 @@
 # @furayoshi/dsh-widechat
 
 A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin that widens the conversation column past the shipped 748px cap, right-aligns the session stats strip, and caps the composer card so long inputs do not hide the conversation above. Adds a settings row to the General page so all of these can be tuned without restarting DSH.
+
 **NOTE**: as at the current state, this packages has been heavily vibecoded, including most of this README. I might rewrite it at the later date, but you have been warned :)
 
 ![widechat ui](media/widechat-ui.webp)
