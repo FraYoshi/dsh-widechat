@@ -175,12 +175,22 @@ export function buildStylesheet(config: ResolvedConfig): string {
  * the screen and hide the conversation above. We cap the card at the
  * configured percentage of the viewport; the inner scroll keeps the
  * textarea usable, and the user always sees the rest of the conversation.
- * The shipped .uV2eYG_scroll inside the card already has its own
- * max-height (--dsh-composer-text-max-height, 336px by default) so the
- * textarea itself stops growing well before the card hits its outer cap. */
+ *
+ * The shipped .uV2eYG_scroll inside the card has its own
+ * max-height (--dsh-composer-text-max-height, 336px by default) that
+ * silently limits the textarea. We override that too so the user's
+ * outer cap actually takes effect: the inner scroll gets the card's
+ * cap minus the card's chrome (padding, accessory row, border —
+ * roughly 64px) so the textarea can grow with the rest of the card. */
 .uV2eYG_card {
   max-height: ${cmh} !important;
   overflow: hidden !important;
+}
+.uV2eYG_scroll {
+  max-height: calc(${cmh} - 64px) !important;
+}
+.uV2eYG_hero .uV2eYG_scroll {
+  max-height: calc(${cmh} - 132px) !important;
 }
 
 .FJxK0a_root {
