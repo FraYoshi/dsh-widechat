@@ -17,14 +17,80 @@ If a saved value is out of range or of the wrong type, the plugin falls back to 
 
 ## Install
 
+DSH's `plugin` subcommand forwards pnpm commands into the profile directory and reconciles the profile's `dsh.profile.bundles` array against the installed packages. So `dsh plugin --profile web add <spec>` is the canonical install path: it runs `pnpm add <spec>`, then automatically appends the package to `bundles` if (and only if) the installed `package.json` declares a `dsh.bundle.patch` — which this package does.
+
+### From npm (after this repo is published)
+
 ```sh
-# Inside the profile directory (where cordis.patch.yml lives):
-pnpm add @furayoshi/dsh-widechat
+dsh plugin --profile web add @furayoshi/dsh-widechat
 ```
 
-That's it. The package declares both `dsh.bundle.patch` (which registers the host row that owns the settings schema) and `dsh.client` (which registers the browser-side override) in its `package.json`. DSH picks up both on the next `dsh` start. No preset row, no `cordis.patch.yml` edit, no restart-ceremony required.
+The `dsh plugin add` command runs `pnpm add` to install the package into `~/.dsh/profiles/web/node_modules/`, then reconciles the `dsh.profile.bundles` array in `~/.dsh/profiles/web/package.json` to include the new bundle. The user does not need to edit `package.json` manually.
 
-If you want to verify the install: open the Web UI, click the settings cog, go to **General** — you should see a "Wide chat" row with the four controls. Drag the sliders, and the chat column / composer / user bubble update without a reload.
+### From a GitHub URL
+
+```sh
+dsh plugin --profile web add @furayoshi/dsh-widechat@github:FraYoshi/dsh-widechat
+```
+
+The `github:<owner>/<repo>` spec is pnpm's shorthand for `https://github.com/<owner>/<repo>.git`. To pin a specific version:
+
+```sh
+# A specific tag
+dsh plugin --profile web add @furayoshi/dsh-widechat@github:FraYoshi/dsh-widechat#v0.7.0
+
+# A branch (e.g. main)
+dsh plugin --profile web add @furayoshi/dsh-widechat@github:FraYoshi/dsh-widechat#main
+
+# A specific commit SHA (for reproducible installs)
+dsh plugin --profile web add @furayoshi/dsh-widechat@github:FraYoshi/dsh-widechat#a1b2c3d4
+```
+
+pnpm clones the repo, runs `npm pack` from the cloned `package.json` to build the tarball (so the `files: ["lib", "cordis.patch.yml", ...]` list matters), and installs it. As long as `cordis.patch.yml` is in `files`, DSH's bundle loader finds it on the next boot.
+
+### From a local path or clone
+
+If you have the source locally (or want to hack on it), install it directly:
+
+```sh
+dsh plugin --profile web add @furayoshi/dsh-widechat@file:/home/<you>/work/dsh-widechat
+```
+
+The `file:` spec is pnpm's way to install from a local path. pnpm links the package's `files` into the profile's `node_modules/@furayoshi/dsh-widechat/`. The profile's `pnpm-workspace.yaml` sets `nodeLinker: hoisted`, so the linked files are **copies**, not symlinks — this means a rebuild of the source does **not** automatically reflect in the installed copy. After editing `src/` and running `npm run build:client`, re-link the package:
+
+```sh
+# From inside the profile directory:
+rm -rf node_modules/@furayoshi && pnpm install
+```
+
+Then restart DSH to pick up the new bundle. (A future version of this plugin could provide a dev script that watches and rebuilds; for now the manual `rm` is the workflow.)
+
+### Updating, removing, verifying
+
+Because `dsh plugin` is just a pnpm forwarder, you can use any pnpm subcommand. From inside the profile directory:
+
+```sh
+# Update to the latest version
+pnpm update @furayoshi/dsh-widechat
+
+# Re-link after editing the source
+rm -rf node_modules/@furayoshi && pnpm install
+
+# Remove the plugin (also strips the entry from dsh.profile.bundles)
+dsh plugin --profile web remove @furayoshi/dsh-widechat
+```
+
+### Verifying the install
+
+Open the Web UI, click the settings cog, go to **General** — you should see a "Wide chat" row with the four controls. Drag the sliders, and the chat column / user bubble / composer update without a reload.
+
+To verify DSH actually loaded the bundle, from inside the profile directory:
+
+```sh
+dsh web --dump-config | grep -i "widechat\|furayoshi"
+```
+
+You should see the host row registered under the new package name.
 
 If you want to edit the source, the build is `npm run build` (which calls `tsc` for the host lib and `tsx scripts/build-client.ts` for the browser bundle). The `lib/` directory is shipped; the `src/` directory is the source.
 
