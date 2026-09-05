@@ -188,9 +188,17 @@ export function buildStylesheet(config: ResolvedConfig): string {
  * free to overflow, the menus extend above the card into the
  * conversation area and are fully visible. */
 .uV2eYG_scroll {
+  /* min-height mirrors the shipped hero variant's mirror floor (52px),
+   * so the textarea stays usable even when the cap falls below the
+   * natural height of the mirror element below it. Without this, on
+   * a small viewport with a low cap, the scroll collapses to ~28px
+   * and the trigger row below it visually sits on top of the typing
+   * area. */
+  min-height: 52px !important;
   max-height: calc(${cmh} - 64px) !important;
 }
 .uV2eYG_hero .uV2eYG_scroll {
+  min-height: 52px !important;
   max-height: calc(${cmh} - 132px) !important;
 }
 
