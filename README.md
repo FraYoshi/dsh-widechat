@@ -107,7 +107,7 @@ The plugin is two halves:
 - **Host** (`lib/index.js`) registers a settings namespace `dsh-widechat` with a `z.object` schema (`chatGutterPct`, `statsAlign`, `userBubblePct`, `composerMaxHeightPct`). The schema's bounds match the slider ranges exactly.
 - **Client** (`lib/client/index.js`) binds a `SettingsScope` to that namespace, re-injects a small CSS override on every scope change, and registers a row in the `settings.general.item` slot.
 
-The CSS override is intentionally minimal — it touches four things, one per setting:
+The CSS override is intentionally minimal — it touches three things, one per setting:
 
 ```css
 :root, .wSkVaW_root, [data-phase] {
@@ -115,16 +115,20 @@ The CSS override is intentionally minimal — it touches four things, one per se
   --dsh-composer-card-max-width:   calc(100% - 2 × <chatGutterPct>%) !important;
 }
 .gdEzaW_userStack { max-width: <userBubblePct>% !important; }
-.uV2eYG_card     { max-height: <composerMaxHeightPct>vh !important; overflow: hidden !important; }
-.uV2eYG_scroll   { max-height: calc(<composerMaxHeightPct>vh - 64px) !important; }
+.uV2eYG_scroll   {
+  min-height: 52px !important;                                  /* floor, see below */
+  max-height: calc(<composerMaxHeightPct>vh - 64px) !important; /* ceiling on the textarea */
+}
 .FJxK0a_root     { text-align: <statsAlign> !important; }
 ```
 
 `chatGutterPct` and `userBubblePct` are **percentages of the cell**; `composerMaxHeightPct` is a **percentage of the viewport**. The cell grows when the sidebar collapses to the rail (56px from 280px), so the column and the bubble grow with it — and the gutter stays at the same percentage. The composer cap, in contrast, is absolute to the viewport so the conversation above is always visible regardless of the sidebar state.
 
-The reason there are two rules for the composer (`uV2eYG_card` and `uV2eYG_scroll`) is that the shipped card has *no* max-height and the shipped inner scroll has `max-height: var(--dsh-composer-text-max-height)` (336px by default). Without overriding the inner scroll too, the user's `composerMaxHeightPct` slider would only take effect at values that allow the inner 336px cap to grow, which is values ≥ 19% on a 1914px viewport — the slider would feel broken above 20% on smaller viewports. The inner override (`- 64px` leaves room for the card's padding and accessory row) makes the slider's effect span the full 20–80 range.
+The composer card itself has **no** `max-height` and **no** `overflow: hidden` override. The card grows naturally to fit its inner scroll (capped above) plus the card's chrome (accessory row, trigger row, padding, gaps). Earlier versions did enforce `max-height: <cap>vh; overflow: hidden;` on the card — but the popover menus (model picker, permission presets, …) open upward from the trigger row inside the card via `bottom: calc(100% + 8px)`, and the card's `overflow: hidden` clipped any portion of the menu that extended above the card top. With the card free to overflow, the menus extend above the card into the conversation area and are fully visible. The conversation scroll above the composer shrinks to make room for the taller card.
 
-DSH's shipped rules are left untouched. The column is still `width: 100%`, `max-width: var(--dsh-chat-content-width)`, `margin: 0 auto`. Toggle, scroll, resize — all the DSH default behavior. The plugin only changes the values of variables (and a few hard caps on the composer) that DSH's CSS already reads.
+The `min-height: 52px` on `.uV2eYG_scroll` mirrors the shipped hero variant's mirror floor. Without it, on a small viewport with a low cap, the scroll collapses to ~28 px and the trigger row below it ends up visually overlapping the typing area. The 52 px floor keeps the textarea usable in that case; below it, the slider value is a no-op for the cap (the scroll holds at 52 px and does not get any smaller).
+
+DSH's shipped rules are left untouched. The column is still `width: 100%`, `max-width: var(--dsh-chat-content-width)`, `margin: 0 auto`. Toggle, scroll, resize — all the DSH default behavior. The plugin only changes the values of variables (and a few caps on the composer's inner scroll) that DSH's CSS already reads.
 
 ## Configuration
 
@@ -147,7 +151,7 @@ Invalid values are dropped to the defaults and a `console.warn` is logged with t
 
 `.wSkVaW_root`, `.Md3f7G_column`, `.uV2eYG_card`, `.uV2eYG_scroll`, `.gdEzaW_userStack`, `.FJxK0a_root` are CSS-Modules-generated class names from `@deepseek-ai/dsh-client-ui-conversation`. Their hashes (the part after the underscore) are recomputed every time that package is rebuilt. Any release of `dsh-client-ui-conversation` can therefore silently break this plugin — specifically, if the shipped rule that reads the variable or has the matching class name changes shape, our override no longer reaches it.
 
-After upgrading `@deepseek-ai/dsh-client-ui-conversation`, check whether the chat column widens, the user bubble stays right-aligned at the configured width, the composer is capped at the configured height, and the stats line still aligns. If any of those regress, the upstream CSS-module hashes changed; see "Updating" below.
+After upgrading `@deepseek-ai/dsh-client-ui-conversation`, check whether the chat column widens, the user bubble stays right-aligned at the configured width, the composer's inner scroll caps at the configured height (and never gets smaller than 52 px), and the stats line still aligns. If any of those regress, the upstream CSS-module hashes changed; see "Updating" below.
 
 ### The `chatGutterPct` is interpreted against the cell, not the viewport
 
@@ -167,8 +171,8 @@ When the upstream hashes change, the fix is mechanical but unavoidable until DSH
 
 - `.wSkVaW_root` — the conversation root (defines the chat-content-width variable)
 - `.Md3f7G_column` — the chat column (reads the variable as max-width)
-- `.uV2eYG_card` — the composer card (we cap its max-height)
-- `.uV2eYG_scroll` — the composer's inner textarea scroll (we cap its max-height)
+- `.uV2eYG_card` — the composer card (no override — see "How it works" for why)
+- `.uV2eYG_scroll` — the composer's inner textarea scroll (we cap its max-height; we floor it at 52px so the trigger row stays below the typing area)
 - `.gdEzaW_userStack` — the user-message bubble stack (we set its max-width)
 - `.FJxK0a_root` — the session-stats line (we set its text-align)
 
