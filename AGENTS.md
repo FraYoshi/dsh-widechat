@@ -24,10 +24,12 @@ DSH is at version 0.1. The shipped chat-column CSS lives in CSS-Modules-generate
 |---|---|---|
 | `wSkVaW_root` | Conversation root (defines `--dsh-chat-content-width` as 748px) | Override to `calc(100% - 2 × chatGutterPct%)` |
 | `Md3f7G_column` | The chat column itself | Nothing — left at shipped `width: 100%; max-width: var(...)` |
-| `uV2eYG_card` | The composer card (the rounded pill) | Cap `max-height` to `composerMaxHeightPct vh`; `overflow: hidden` |
-| `uV2eYG_scroll` | The composer's inner textarea scroll | Cap `max-height` to `calc(composerMaxHeightPct vh - 64px)` so the user's cap takes effect |
+| `uV2eYG_card` | The composer card (the rounded pill) | No `max-height` / `overflow` — the card grows naturally to fit the inner scroll + chrome (see note below) |
+| `uV2eYG_scroll` | The composer's inner textarea scroll | Cap `max-height` to `calc(composerMaxHeightPct vh - 64px)` so the user's cap takes effect; `min-height: 52px` so the textarea stays usable on small viewports |
 | `gdEzaW_userStack` | The user-message bubble's stack | Cap `max-width` to `userBubblePct%` |
 | `FJxK0a_root` | The session-stats line under the composer | Set `text-align` |
+
+Note: `.uV2eYG_card` is *not* given `overflow: hidden` even though we cap the scroll inside it. Earlier versions did — the cap was paired with `overflow: hidden` on the card to enforce a hard visible cap — but the popover menus (model picker, permission presets, …) are absolutely-positioned descendants of elements inside the card. They open upward from the trigger row via `bottom: calc(100% + 8px)` and the card's overflow clipping hid any portion that extended above the card top. The card is now `overflow: visible`; its height is bounded by the inner scroll's `max-height` plus the card's chrome (accessory row, trigger row, padding, gaps), and the conversation scroll above the composer shrinks to make room. `.uV2eYG_scroll` also has a `min-height: 52px` so the textarea never gets so small that the trigger row ends up visually overlapping the typing area on small viewports.
 
 When DSH changes any of these class names, the override silently stops applying. The plugin's `apply()` doesn't know. The user sees the column at 748px, the bubble at 525px, the composer at the natural ~43vh, and wonders why their sliders don't do anything.
 
