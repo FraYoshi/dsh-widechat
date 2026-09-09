@@ -2,7 +2,11 @@
 
 A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin that widens the conversation column past the shipped cap, right-aligns the session stats strip, caps the user-message bubble, and caps the composer's inner scroll so long inputs do not hide the conversation above. Adds a settings row to the General page so all of these can be tuned without restarting DSH.
 
-Tested against DSH `0.1.2-rc.1`. The host half uses the 0.1.2 settings API (`ctx.settings.register`); older `0.1.1-rc.x` hosts that expect `settingsNamespace` are not supported.
+**Compatibility**
+| DSH version  | min version |
+| :--- | :--- |
+| `0.1.2-rc.1` | `0.8`       |
+| `0.1.1-rc.1` | `<0.8`      |
 
 **NOTE**: as at the current state, this packages has been heavily vibecoded, including most of this README. I might rewrite it at the later date, but you have been warned :)
 
