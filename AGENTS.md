@@ -18,28 +18,31 @@ The host-side registration (the `cordis.patch.yml` row + the `apply` in `src/ind
 
 ## 3. The brittle parts (the things that will break)
 
-DSH is at version 0.1. The shipped chat-column CSS lives in CSS-Modules-generated class names. **The plugin overrides class-name selectors, not stable IDs.** When `@deepseek-ai/dsh-client-ui-conversation` is rebuilt, the hashes after the underscore are recomputed. The plugin targets six of them:
+DSH is at version 0.1. The shipped chat-column CSS lives in CSS-Modules-generated class names. **The plugin overrides class-name selectors, not stable IDs.** When the owning UI package is rebuilt, the hashes after the underscore are recomputed. Since 0.1.2-rc.1 the targets are split across **two** packages: `@deepseek-ai/dsh-client-ui-conversation` (root + composer) and the new `@deepseek-ai/dsh-client-ui-chat` (chat column, user bubble, stats line). The plugin targets six hashes:
 
-| CSS-module hash | What it is | What the plugin does to it |
-|---|---|---|
-| `wSkVaW_root` | Conversation root (defines `--dsh-chat-content-width` as 748px) | Override to `calc(100% - 2 × chatGutterPct%)` |
-| `Md3f7G_column` | The chat column itself | Nothing — left at shipped `width: 100%; max-width: var(...)` |
-| `uV2eYG_card` | The composer card (the rounded pill) | No `max-height` / `overflow` — the card grows naturally to fit the inner scroll + chrome (see note below) |
-| `uV2eYG_scroll` | The composer's inner textarea scroll | Cap `max-height` to `calc(composerMaxHeightPct vh - 64px)` so the user's cap takes effect; `min-height: 52px` so the textarea stays usable on small viewports |
-| `gdEzaW_userStack` | The user-message bubble's stack | Cap `max-width` to `userBubblePct%` |
-| `FJxK0a_root` | The session-stats line under the composer | Set `text-align` |
+| CSS-module hash | Owning package | What it is | What the plugin does to it |
+|---|---|---|---|
+| `wSkVaW_root` | dsh-client-ui-conversation | Conversation root (defines `--dsh-chat-content-width`) | Override to `calc(100% - 2 × chatGutterPct%)` |
+| `EvIC1a_column` | dsh-client-ui-chat | The chat column itself | Nothing — left at shipped `width: 100%; max-width: var(--dsh-chat-content-width)` |
+| `uV2eYG_card` | dsh-client-ui-conversation | The composer card (the rounded pill) | No `max-height` / `overflow` — the card grows naturally to fit the inner scroll + chrome (see note below) |
+| `uV2eYG_scroll` | dsh-client-ui-conversation | The composer's inner textarea scroll | Cap `max-height` to `calc(composerMaxHeightPct vh - 64px)` (hero variant: `- 132px`) so the user's cap takes effect; `min-height: 52px` so the textarea stays usable on small viewports |
+| `Sixlwa_userStack` | dsh-client-ui-chat | The user-message bubble's stack | Cap `max-width` to `userBubblePct%` |
+| `-NDN2W_root` | dsh-client-ui-chat | The session-stats line under the composer | Set `text-align` |
+
+Renamed in 0.1.2-rc.1 (old → new): `Md3f7G_column` → `EvIC1a_column`, `gdEzaW_userStack` → `Sixlwa_userStack`, `FJxK0a_root` → `-NDN2W_root`. The three conversation hashes were untouched.
 
 Note: `.uV2eYG_card` is *not* given `overflow: hidden` even though we cap the scroll inside it. Earlier versions did — the cap was paired with `overflow: hidden` on the card to enforce a hard visible cap — but the popover menus (model picker, permission presets, …) are absolutely-positioned descendants of elements inside the card. They open upward from the trigger row via `bottom: calc(100% + 8px)` and the card's overflow clipping hid any portion that extended above the card top. The card is now `overflow: visible`; its height is bounded by the inner scroll's `max-height` plus the card's chrome (accessory row, trigger row, padding, gaps), and the conversation scroll above the composer shrinks to make room. `.uV2eYG_scroll` also has a `min-height: 52px` so the textarea never gets so small that the trigger row ends up visually overlapping the typing area on small viewports.
 
 When DSH changes any of these class names, the override silently stops applying. The plugin's `apply()` doesn't know. The user sees the column at 748px, the bubble at 525px, the composer at the natural ~43vh, and wonders why their sliders don't do anything.
 
-**To find the current hashes:** `~/.dsh/profiles/web/node_modules/@deepseek-ai/dsh-client-ui-conversation/lib/client.js`. Search for `_module_css_default\s*=\s*{` and follow the `key: "wSkVaW_root"`, `key: "Md3f7G_column"`, etc. lines. The keys are the new class names.
+**To find the current hashes:** the profiles share one store, `~/.dsh/profiles/node_modules/` (with a per-profile `web/node_modules` overlay). Check both `@deepseek-ai/dsh-client-ui-conversation/lib/client.js` and `@deepseek-ai/dsh-client-ui-chat/lib/client.js`. Since 0.1.2-rc.1 the CSS is inlined as `const css$N = "..."` strings, so grep for the rule you're overriding (e.g. `chat-content-width`) and read the class hash out of the selector.
 
 Other brittle surfaces:
 
-- The `--dsh-chat-content-width` variable is read by `.Md3f7G_column` as `max-width: var(--dsh-chat-content-width)`. If DSH renames the variable, the override stops reaching the column. The shipped value is `748px` on `.wSkVaW_root`; the variable name has been stable for at least 0.1.0-rc.2 through 0.1.1-rc.2.
+- The `--dsh-chat-content-width` variable is read by `.EvIC1a_column` as `max-width: var(--dsh-chat-content-width)`. If DSH renames the variable, the override stops reaching the column. Since 0.1.2-rc.1 the shipped value on `.wSkVaW_root` is `var(--dsh-chat-user-width, clamp(680px, calc(var(--dsh-conversation-column-width,0px) * .64), 920px))` — DSH added drag-to-resize handles that write `--dsh-conversation-column-width` (ResizeObserver) and `--dsh-chat-user-width` (localStorage `dsh.conversation.contentWidth`) inline. Our `!important` stylesheet rule still wins (an important stylesheet rule beats a normal inline style, and DSH never sets `--dsh-chat-content-width` itself inline), so the slider stays the source of truth and dragging is effectively a no-op. The variable name has been stable through 0.1.2-rc.1.
 - The `--dsh-composer-text-max-height` variable is the shipped inner-scroll cap (336px). The plugin overrides `uV2eYG_scroll`'s `max-height` directly rather than setting this variable — the variable is set by the conversation package and a future refactor could remove the override path.
-- The SettingsScope API (the `ctx.settingsScope.bind({ namespace })` call) is a Cordis service. DSH might rename the service or change the signature. The plugin uses a local `ScopeLike` interface so the type dependency is only structural, not nominal.
+- The SettingsScope API (the `ctx.settingsScope.bind({ namespace })` call) is a Cordis client service, now provided by `@deepseek-ai/dsh-client-ui-settings` (the old `dsh-client-runtime` package is gone). The plugin uses a local `ScopeLike` interface so the type dependency is only structural, not nominal.
+- **The host settings API changed in 0.1.2-rc.1 and is the loudest break in the plugin.** `@deepseek-ai/dsh-settings` no longer exports `settingsNamespace` or `installSettingsSection`; the host half now calls `ctx.settings.register(namespace, schema)` with a plain string namespace (regex `/^[a-z][a-z0-9-]*$/`). A host entry that imports a removed export does **not** fail silently — it aborts the whole profile boot with `plugin tree failed to load` in the journal (see §10).
 
 ## 4. How to test safely without restarting DSH
 
@@ -57,6 +60,8 @@ The current dev environment has a dynamic plugin `wcfg-2` that was used during t
 ## 5. The local install workflow
 
 The plugin lives at `~/workspaces/dsh-widechat/` (this repo). The DSH profile lives at `~/.dsh/profiles/web/`. The plugin is installed into the profile's `node_modules/` and listed in the profile's `package.json` `dependencies` + `dsh.profile.bundles`.
+
+Since DSH 0.1.2 the profile dependencies live in a **shared store** at `~/.dsh/profiles/node_modules/` (containing `dsh` itself, all `@deepseek-ai/*` packages, `schemastery`, `react`), with a per-profile `web/node_modules/` overlay for the profile's own dependencies — `@furayoshi/dsh-widechat` is in the overlay. The `file:` dependency resolves to this workspace, so pnpm copies the package's `files` there.
 
 **First-time install (or re-link after editing the source):**
 
@@ -105,6 +110,10 @@ dsh web --dump-config | grep -i "widechat\|furayoshi"
 
 These have all bitten this codebase at least once.
 
+- **A broken host import kills the whole profile boot (0.1.2 lesson).** v0.7.x imported `settingsNamespace` from `@deepseek-ai/dsh-settings`; 0.1.2-rc.1 removed that export, and DSH died at boot with `Error: dsh: plugin tree failed to load: ... SyntaxError: The requested module '@deepseek-ai/dsh-settings' does not provide an export named 'settingsNamespace'`. A client-side break is silent; a host-side import break is a hard crash — the user cannot chat at all. The fix was to stop importing from `dsh-settings` entirely and call `ctx.settings.register(namespace, schema)`. When in doubt about a host half, check the journal first: `journalctl -u dsh.service | grep -A3 'plugin tree'`.
+- **`dsh web --dump-config` does not import loader entries.** It composes the config tree (bundle rows, patches) without executing `apply()`, so a clean dump proves registration, not importability. To prove the tree actually loads, boot on a throwaway port: `dsh web --no-open --port 5101` — a broken entry exits within seconds, a healthy one stays up serving.
+- **schemastery 3.18.2 API.** The default export carries everything (`import z from "@deepseek-ai/schemastery"` — the named `{ z }` import is broken). There is no `z.literal` (a raw string in `z.union([...])` is fine), and the static resolver is `z.resolve(data, schema)` — data first, schema second.
+- **`dsh-web-search-searxng` in the profile is also 0.1.2-broken** (it imports the removed `installSettingsSection`), but its row is `disabled: true` in the composed config, so it never loads. Search runs through `dsh-surfing-plugin` (provider `surfing-searxng`). Leave it disabled; do not re-enable it.
 - **`cordis.patch.yml` must be in `package.json`'s `files` array.** pnpm does not copy files outside the `files` list. If `cordis.patch.yml` is missing from `node_modules/<pkg>/`, DSH crashes on profile boot with `ENOENT: failed to read overlay`. The fix is `files: ["lib", "cordis.patch.yml", "README.md", "LICENSE"]` (or similar). This bit us in v0.4.0.
 - **The `id` in `cordis.patch.yml` must match the package name exactly.** DSH's bundle loader looks up bundles by name; a mismatch makes the bundle invisible. The convention: `id: '@furayoshi/dsh-widechat'`, `name: '@furayoshi/dsh-widechat'`. If the namespace is renamed in `src/settings.ts`, the patch's `id` must follow.
 - **Trailing garbage on `package.json`.** When the profile's `package.json` is hand-edited, a stray `n` (or any other character) at the end makes the file invalid JSON. DSH's loader throws on the next boot. Always parse the file with `python3 -c "import json; json.load(open('...'))"` after editing.
@@ -143,32 +152,35 @@ These have all bitten this codebase at least once.
 1. Open the Web UI's dev console (F12 or Cmd+Opt+I).
 2. Run `document.querySelectorAll('style[data-plugin="dsh-widechat"]')` — should be 2 (one from `installRowStyles`, one from the per-scope CSS injection).
 3. Run `document.querySelectorAll('style[data-plugin-css*="dsh-widechat"]')` — the `dswc-row` styles should be there.
-4. Run `getComputedStyle(document.querySelector('.Md3f7G_column')).width` — should match the configured `chatGutterPct`.
-5. Run `getComputedStyle(document.querySelector('.uV2eYG_card')).maxHeight` — should match `composerMaxHeightPct vh`.
-6. If the values are wrong, the CSS isn't reaching. Check the bundle rev: `document.querySelector('script[src*="furayoshi/dsh-widechat/client.js"]').src` and compare to `dsh web --dump-config | grep furayoshi`.
+4. Run `getComputedStyle(document.querySelector('.EvIC1a_column')).maxWidth` — should match `calc(100% - 2 × chatGutterPct%)`.
+5. Run `getComputedStyle(document.querySelector('.uV2eYG_scroll')).maxHeight` — should match `calc(composerMaxHeightPct vh - 64px)` (the card itself has no `max-height`).
+6. If the values are wrong, the CSS isn't reaching. Check the bundle rev: `document.querySelector('script[src*="furayoshi/dsh-widechat/client.js"]').src` and compare to the graph row in the page source (`window.__DSH_BOOT__`).
 
 ## 9. Where to look in the DSH source
 
-When you need to find what DSH actually does, the canonical source lives in `~/.npm-global/lib/node_modules/@deepseek-ai/dsh/node_modules/`. Useful entry points:
+When you need to find what DSH actually does, the CLI core lives in `~/.npm-global/lib/node_modules/@deepseek-ai/dsh/` and the profile UI packages in the shared store `~/.dsh/profiles/node_modules/@deepseek-ai/`. Useful entry points:
 
-- `dsh-client-ui-conversation/lib/client.js` — the chat column, the composer, the stats line, the user message. Almost every CSS rule the plugin overrides is in here.
+- `dsh-client-ui-conversation/lib/client.js` — the conversation root, the composer, the width drag handles. (Root + composer only since 0.1.2.)
+- `dsh-client-ui-chat/lib/client.js` — the chat column, the user-message bubble, the stats line. New in 0.1.2.
 - `dsh-client-ui-layout/lib/client.js` — the page-level grid, the sidebar/center/details columns.
-- `dsh-client-modules/lib/index.js` — the client plugin discovery and `/plugins/:id/client.js` route. Read this to understand why a plugin might not be loading.
-- `dsh-client-runtime/lib/client.js` — the client-side Cordis runtime, the SettingsScope and `ctx.settingsScope.bind` implementation.
+- `dsh-client-modules/lib/index.js` — client plugin discovery, the module graph, and the combo `/plugins/??...` route. Read this to understand why a plugin might not be loading.
+- `dsh-client-ui-settings/lib/client.js` — the client-side Cordis runtime services, including the settings scope (`ctx.settingsScope.bind`) implementation.
 - `dsh-client-ui-settings-general/lib/client.js` — the General settings page where the row renders.
+- `dsh-settings/lib/index.js` — the host settings provider: `register(ns, schema, options?)`, `installSection(...)`. The reference consumer is `dsh-agent-default-model/lib/index.js`.
 - `dsh-settings-file/lib/index.js` — the file-backed settings provider (`~/.dsh/settings.yaml`).
 
 For the host side: `~/.npm-global/lib/node_modules/@deepseek-ai/dsh/lib/`. Useful:
 
 - `bin.js` — the CLI, including the `dsh plugin` subcommand.
-- `plugin-9h8shc4d.js` — the plugin subcommand implementation (pnpm forwarder + reconciliation).
+- `plugin-*.js` — the plugin subcommand implementation (pnpm forwarder + reconciliation; the chunk hash changes between DSH versions).
 - `profile-boot-*.js` — the profile boot sequence.
 
-The `dsh web --dump-config` and `dsh web --dump-default-config` commands print the composed profile tree, which is the best way to see whether a bundle is registered and what its `apply()` looks like.
+The `dsh web --dump-config` and `dsh web --dump-default-config` commands print the composed profile tree, which is the best way to see whether a bundle is registered and what its `apply()` looks like. (It does not execute `apply()` — see the gotcha in §7.)
 
 ## 10. When in doubt
 
-- If a CSS rule isn't reaching the page, the class name probably changed. The shipped CSS lives in `node_modules/@deepseek-ai/dsh-client-ui-conversation/lib/client.js`. Search for the rule you're trying to override and look at the class hash.
+- If DSH itself fails to boot after a plugin change, the journal has it: `journalctl -u dsh.service | grep -A3 'plugin tree'`. A broken **host** import is a hard crash, not a silent no-op.
+- If a CSS rule isn't reaching the page, the class name probably changed. The shipped CSS lives in `dsh-client-ui-conversation/lib/client.js` (root, composer) and `dsh-client-ui-chat/lib/client.js` (column, bubble, stats line) in the profile store. Search for the rule you're trying to override and look at the class hash.
 - If the host's `apply()` isn't running, the host-side registration in `cordis.patch.yml` is probably wrong, or the host's `settings` service isn't available.
 - If the client's `apply()` isn't running, the inject deps in the `cordis_define` call didn't resolve. Add `console.log` at the start of `apply()` and inside each branch.
 - If the slider doesn't change the CSS, the SettingsScope is read-only or the namespace isn't registered. Add `console.log(scope.getSnapshot())` to the row's render and check the value.

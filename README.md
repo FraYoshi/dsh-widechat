@@ -1,6 +1,8 @@
 # @furayoshi/dsh-widechat
 
-A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin that widens the conversation column past the shipped 748px cap, right-aligns the session stats strip, and caps the composer card so long inputs do not hide the conversation above. Adds a settings row to the General page so all of these can be tuned without restarting DSH.
+A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin that widens the conversation column past the shipped cap, right-aligns the session stats strip, caps the user-message bubble, and caps the composer's inner scroll so long inputs do not hide the conversation above. Adds a settings row to the General page so all of these can be tuned without restarting DSH.
+
+Tested against DSH `0.1.2-rc.1`. The host half uses the 0.1.2 settings API (`ctx.settings.register`); older `0.1.1-rc.x` hosts that expect `settingsNamespace` are not supported.
 
 **NOTE**: as at the current state, this packages has been heavily vibecoded, including most of this README. I might rewrite it at the later date, but you have been warned :)
 
@@ -10,14 +12,14 @@ A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin tha
 
 ## What it does
 
-The shipped DSH web UI caps the chat content at `--dsh-chat-content-width: 748px` and centers the column with `margin: 0 auto`. On any monitor wider than ~1024px this leaves large empty gutters on both sides and a narrow reading area. This plugin widens that cap to leave only the configured gutter, right-aligns the user-message bubble (the shipped default is narrow on wide viewports), and caps the composer card to a percentage of the viewport so long inputs do not eat the conversation above.
+The shipped DSH web UI caps the chat content with `--dsh-chat-content-width` (a fixed pixel value on pre-0.1.2 hosts, a `clamp()` of the column width on 0.1.2+) and centers the column with `margin: 0 auto`. On any monitor wider than ~1024px this leaves large empty gutters on both sides and a narrow reading area. This plugin widens that cap to leave only the configured gutter, caps the user-message bubble to a share of the column (the shipped default is narrow on wide viewports), and caps the composer's inner scroll to a percentage of the viewport so long inputs do not eat the conversation above.
 
 A small row in the **General** settings page lets you tune four values:
 
 - **Chat column gutter** — a slider, 0–10% of the cell on each side. The shipped default is `1 %`. The column is sized to leave this much whitespace on each side.
 - **Session-stats alignment** — a three-way toggle (left / center / right). The shipped default is `right`. The session-stats line under the composer (token counts, duration, etc.) lines up accordingly.
 - **Your message bubble width** — a slider, 30–100% of the chat column. The shipped default is `75 %`. Your outgoing messages are right-aligned at this width; the assistant's messages fill the rest of the column.
-- **Composer max height** — a slider, 20–80% of the viewport. The shipped default is `50 %`. The composer card and its inner textarea are both capped at this height, so long inputs do not push the conversation off-screen.
+- **Composer max height** — a slider, 20–80% of the viewport. The shipped default is `50 %`. The composer's inner textarea scroll is capped at this height (with a 52 px floor), so long inputs do not push the conversation off-screen.
 
 If a saved value is out of range or of the wrong type, the plugin falls back to the default and logs a `console.warn` with the offending field. The page never refuses to render.
 
@@ -43,7 +45,7 @@ The `github:<owner>/<repo>` spec is pnpm's shorthand for `https://github.com/<ow
 
 ```sh
 # A specific tag
-dsh plugin --profile web add @furayoshi/dsh-widechat@github:FraYoshi/dsh-widechat#v0.7.0
+dsh plugin --profile web add @furayoshi/dsh-widechat@github:FraYoshi/dsh-widechat#v0.8.0
 
 # A branch (e.g. main)
 dsh plugin --profile web add @furayoshi/dsh-widechat@github:FraYoshi/dsh-widechat#main
@@ -104,22 +106,23 @@ If you want to edit the source, the build is `npm run build` (which calls `tsc` 
 
 The plugin is two halves:
 
-- **Host** (`lib/index.js`) registers a settings namespace `dsh-widechat` with a `z.object` schema (`chatGutterPct`, `statsAlign`, `userBubblePct`, `composerMaxHeightPct`). The schema's bounds match the slider ranges exactly.
+- **Host** (`lib/index.js`) registers the settings namespace `dsh-widechat` on the host `settings` service via `ctx.settings.register("dsh-widechat", schema)` with a `z.object` schema (`chatGutterPct`, `statsAlign`, `userBubblePct`, `composerMaxHeightPct`). The schema's bounds match the slider ranges exactly.
 - **Client** (`lib/client/index.js`) binds a `SettingsScope` to that namespace, re-injects a small CSS override on every scope change, and registers a row in the `settings.general.item` slot.
 
-The CSS override is intentionally minimal — it touches three things, one per setting:
+The CSS override is intentionally minimal — it touches three things, one per setting (hashes as of DSH 0.1.2-rc.1; the column, bubble and stats hashes live in `dsh-client-ui-chat`, the rest in `dsh-client-ui-conversation`):
 
 ```css
 :root, .wSkVaW_root, [data-phase] {
   --dsh-chat-content-width:        calc(100% - 2 × <chatGutterPct>%) !important;
   --dsh-composer-card-max-width:   calc(100% - 2 × <chatGutterPct>%) !important;
 }
-.gdEzaW_userStack { max-width: <userBubblePct>% !important; }
+.Sixlwa_userStack { max-width: <userBubblePct>% !important; }
 .uV2eYG_scroll   {
   min-height: 52px !important;                                  /* floor, see below */
   max-height: calc(<composerMaxHeightPct>vh - 64px) !important; /* ceiling on the textarea */
 }
-.FJxK0a_root     { text-align: <statsAlign> !important; }
+.uV2eYG_hero .uV2eYG_scroll { max-height: calc(<composerMaxHeightPct>vh - 132px) !important; }
+.-NDN2W_root     { text-align: <statsAlign> !important; }
 ```
 
 `chatGutterPct` and `userBubblePct` are **percentages of the cell**; `composerMaxHeightPct` is a **percentage of the viewport**. The cell grows when the sidebar collapses to the rail (56px from 280px), so the column and the bubble grow with it — and the gutter stays at the same percentage. The composer cap, in contrast, is absolute to the viewport so the conversation above is always visible regardless of the sidebar state.
@@ -149,9 +152,13 @@ Invalid values are dropped to the defaults and a `console.warn` is logged with t
 
 ### This plugin overrides internal CSS-module class hashes
 
-`.wSkVaW_root`, `.Md3f7G_column`, `.uV2eYG_card`, `.uV2eYG_scroll`, `.gdEzaW_userStack`, `.FJxK0a_root` are CSS-Modules-generated class names from `@deepseek-ai/dsh-client-ui-conversation`. Their hashes (the part after the underscore) are recomputed every time that package is rebuilt. Any release of `dsh-client-ui-conversation` can therefore silently break this plugin — specifically, if the shipped rule that reads the variable or has the matching class name changes shape, our override no longer reaches it.
+`.wSkVaW_root`, `.EvIC1a_column`, `.uV2eYG_card`, `.uV2eYG_scroll`, `.Sixlwa_userStack`, `.-NDN2W_root` are CSS-Modules-generated class names from the DSH UI packages — since 0.1.2 the root and composer hashes come from `@deepseek-ai/dsh-client-ui-conversation` and the column, bubble and stats hashes from the new `@deepseek-ai/dsh-client-ui-chat`. Their hashes (the part after the underscore) are recomputed every time the owning package is rebuilt. Any release of those packages can therefore silently break this plugin — specifically, if the shipped rule that reads the variable or has the matching class name changes shape, our override no longer reaches it.
 
-After upgrading `@deepseek-ai/dsh-client-ui-conversation`, check whether the chat column widens, the user bubble stays right-aligned at the configured width, the composer's inner scroll caps at the configured height (and never gets smaller than 52 px), and the stats line still aligns. If any of those regress, the upstream CSS-module hashes changed; see "Updating" below.
+After upgrading DSH, check whether the chat column widens, the user bubble stays right-aligned at the configured width, the composer's inner scroll caps at the configured height (and never gets smaller than 52 px), and the stats line still aligns. If any of those regress, the upstream CSS-module hashes changed; see "Updating" below.
+
+### The slider wins over DSH's drag-to-resize (0.1.2+)
+
+DSH 0.1.2 added drag handles on the chat column that persist a width in `localStorage` (`dsh.conversation.contentWidth`) and write it inline as `--dsh-chat-user-width`. This plugin's `!important` override of `--dsh-chat-content-width` takes precedence over that inline value, so the gutter slider stays the source of truth and dragging the handles is effectively a no-op while the plugin is installed.
 
 ### The `chatGutterPct` is interpreted against the cell, not the viewport
 
@@ -167,18 +174,18 @@ The package ships a `cordis.patch.yml` (in `files: ["lib", "cordis.patch.yml", "
 
 ## Updating
 
-When the upstream hashes change, the fix is mechanical but unavoidable until DSH exposes a stable public API for layout overrides. The plugin targets six CSS-module class hashes:
+When the upstream hashes change, the fix is mechanical but unavoidable until DSH exposes a stable public API for layout overrides. The plugin targets six CSS-module class hashes (as of DSH 0.1.2-rc.1):
 
-- `.wSkVaW_root` — the conversation root (defines the chat-content-width variable)
-- `.Md3f7G_column` — the chat column (reads the variable as max-width)
-- `.uV2eYG_card` — the composer card (no override — see "How it works" for why)
-- `.uV2eYG_scroll` — the composer's inner textarea scroll (we cap its max-height; we floor it at 52px so the trigger row stays below the typing area)
-- `.gdEzaW_userStack` — the user-message bubble stack (we set its max-width)
-- `.FJxK0a_root` — the session-stats line (we set its text-align)
+- `.wSkVaW_root` — the conversation root (defines the chat-content-width variable) — `dsh-client-ui-conversation`
+- `.EvIC1a_column` — the chat column (reads the variable as max-width) — `dsh-client-ui-chat`
+- `.uV2eYG_card` — the composer card (no override — see "How it works" for why) — `dsh-client-ui-conversation`
+- `.uV2eYG_scroll` — the composer's inner textarea scroll (we cap its max-height; we floor it at 52px so the trigger row stays below the typing area) — `dsh-client-ui-conversation`
+- `.Sixlwa_userStack` — the user-message bubble stack (we set its max-width) — `dsh-client-ui-chat`
+- `.-NDN2W_root` — the session-stats line (we set its text-align) — `dsh-client-ui-chat`
 
-All six appear in `dsh-client-ui-conversation/lib/client.js`. A regex search for `_module_css_default\s*=\s*{` will land you near the manifests. To update:
+The hashes live in `dsh-client-ui-conversation/lib/client.js` and `dsh-client-ui-chat/lib/client.js` (in the profile's `node_modules`). Since 0.1.2 the CSS is inlined as `const css$N = "..."` strings, so search for the rule you're overriding (e.g. `chat-content-width`) and read the class hash out of the selector. To update:
 
-1. Open the new `dsh-client-ui-conversation/lib/client.js` in your editor and search for each of the six names above. If a name has changed (the part after the underscore), update the corresponding name in `src/client/css.ts`. If a name has been removed (e.g. DSH restructured the composer), comment out the matching rule and the matching slider in `src/client/WideChatRow.tsx`, and update the README's Caveats and "How it works" sections to match.
+1. Search both `client.js` files for each of the six names above. If a name has changed (the part after the underscore), update the corresponding name in `src/client/css.ts`. If a name has been removed (e.g. DSH restructured the composer), comment out the matching rule and the matching slider in `src/client/WideChatRow.tsx`, and update this README's Caveats and "How it works" sections to match.
 2. `npm run build` to rebuild the host and client bundles.
 3. Bump the version in `package.json` (the user-facing change is a patch for a single-hash fix, minor for a class-set change, major for an API change).
 

@@ -13,9 +13,18 @@
  * toggle and window resize, exactly the way the user already knows.
  *
  * Class hashes are the CSS-modules-generated ones from
- * `@deepseek-ai/dsh-client-ui-conversation` and
- * `@deepseek-ai/dsh-client-ui-layout`. They are recomputed on every
- * upstream rebuild; when they change this file is what needs updating.
+ * `@deepseek-ai/dsh-client-ui-conversation` (conversation root, composer
+ * card/scroll) and `@deepseek-ai/dsh-client-ui-chat` (chat column,
+ * user bubble, stats line). They are recomputed on every upstream
+ * rebuild; when they change this file is what needs updating.
+ *
+ * Current targets (DSH 0.1.2-rc.1):
+ *   wSkVaW_root      conversation root (dsh-client-ui-conversation)
+ *   EvIC1a_column    chat column, max-width: var(--dsh-chat-content-width)
+ *   uV2eYG_card      composer card
+ *   uV2eYG_scroll    composer inner scroll
+ *   Sixlwa_userStack user-message bubble stack (dsh-client-ui-chat)
+ *   -NDN2W_root      session stats line (dsh-client-ui-chat)
  */
 
 import {
@@ -133,18 +142,21 @@ export function resolveConfig(raw: unknown, defaults: {
 /**
  * Build the override stylesheet for one resolved config.
  *
- * The chat column cap is widened from the shipped 748px to
- * `100% - 2*chatGutterPct%` of the conversation root. The column
- * itself keeps the shipped `width: 100%` and `margin: 0 auto`, so it
- * still reflows on sidebar toggle and window resize, exactly the way
- * the user already knows — the only change is that the column is no
- * longer capped at 748px and now leaves a configurable gutter on each
- * side.
+ * The chat column cap is pinned to `100% - 2*chatGutterPct%` of the
+ * conversation root via `--dsh-chat-content-width`. DSH 0.1.2-rc.1
+ * ships the variable as an adaptive clamp
+ * (`clamp(680px, column*0.64, 920px)`) that its drag-to-resize handles
+ * can override through `--dsh-chat-user-width` (written inline on the
+ * root); our `!important` class declaration wins over that, so the
+ * slider stays the source of truth. The column itself
+ * (`EvIC1a_column`) keeps the shipped `width: 100%` and
+ * `margin: 0 auto`, so it still reflows on sidebar toggle and window
+ * resize, exactly the way the user already knows.
  *
  * The composer card inherits the same cap through
  * `--dsh-composer-card-max-width`, which the shipped composer CSS
  * already reads. The stats line aligns to the user's choice via
- * `.FJxK0a_root { text-align: ... }`.
+ * `.-NDN2W_root { text-align: ... }`.
  */
 export function buildStylesheet(config: ResolvedConfig): string {
   const g = config.chatGutterPct;
@@ -160,13 +172,13 @@ export function buildStylesheet(config: ResolvedConfig): string {
   --dsh-composer-card-max-width: ${cap} !important;
 }
 
-/* User-message bubble width. The shipped cap is
- * max-width: min(525px, 82%), which keeps user bubbles narrow on wide
- * columns. We replace the cap with the configured userBubblePct of
- * the chat column, so the bubble scales with the column. The shipped
- * align-items: flex-end on .gdEzaW_userRow keeps the bubble pinned
- * to the right edge. */
-.gdEzaW_userStack {
+/* User-message bubble width. The shipped cap (DSH 0.1.2-rc.1) is
+ * max-width: min(calc(var(--dsh-chat-content-width,748px) * .702), 82%),
+ * which keeps user bubbles narrow on wide columns. We replace the cap
+ * with the configured userBubblePct of the chat column, so the bubble
+ * scales with the column. The shipped align-items: flex-end on
+ * .Sixlwa_userRow keeps the bubble pinned to the right edge. */
+.Sixlwa_userStack {
   max-width: ${ub} !important;
 }
 
@@ -188,12 +200,12 @@ export function buildStylesheet(config: ResolvedConfig): string {
  * free to overflow, the menus extend above the card into the
  * conversation area and are fully visible. */
 .uV2eYG_scroll {
-  /* min-height mirrors the shipped hero variant's mirror floor (52px),
-   * so the textarea stays usable even when the cap falls below the
-   * natural height of the mirror element below it. Without this, on
-   * a small viewport with a low cap, the scroll collapses to ~28px
-   * and the trigger row below it visually sits on top of the typing
-   * area. */
+  /* min-height mirrors the shipped hero variant's input floor
+   * (.uV2eYG_hero .uV2eYG_input { min-height: 52px }), so the typing
+   * area stays usable even when the cap falls below the natural
+   * height of its content. Without this, on a small viewport with a
+   * low cap, the scroll collapses to ~28px and the trigger row below
+   * it visually sits on top of the typing area. */
   min-height: 52px !important;
   max-height: calc(${cmh} - 64px) !important;
 }
@@ -202,7 +214,7 @@ export function buildStylesheet(config: ResolvedConfig): string {
   max-height: calc(${cmh} - 132px) !important;
 }
 
-.FJxK0a_root {
+.-NDN2W_root {
   text-align: ${config.statsAlign} !important;
 }
 `;

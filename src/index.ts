@@ -11,11 +11,21 @@
  * reason (`dsh.bundle.patch`).
  *
  * The constants, defaults, and field keys live in `./settings.ts` so the
- * client half can import them without pulling `@deepseek-ai/dsh-settings`
- * and `@deepseek-ai/schemastery` into the browser bundle (where the loader
- * has no module table entry for them and would refuse to resolve).
+ * client half can import them without pulling `@deepseek-ai/schemastery`
+ * into the browser bundle (where the loader has no module table entry for
+ * it and would refuse to resolve).
+ *
+ * DSH >= 0.1.2-rc.1: the settings service (`ctx.settings`, a
+ * `SettingsProvider` from `@deepseek-ai/dsh-settings`) registers
+ * namespaces with a plain lowercase-hyphenated string:
+ *
+ *   ctx.settings.register("dsh-widechat", schema)
+ *
+ * The pre-0.1.2 `settingsNamespace()` helper export no longer exists in
+ * `@deepseek-ai/dsh-settings`; a static import of it fails the whole
+ * plugin tree at boot with
+ * `SyntaxError: ... does not provide an export named 'settingsNamespace'`.
  */
-import { settingsNamespace } from "@deepseek-ai/dsh-settings";
 import z from "@deepseek-ai/schemastery";
 import {
   CHAT_GUTTER_PCT_FIELD,
@@ -57,13 +67,16 @@ export const WideChatSettingsSchema = z.object({
     .required(false),
 });
 
-/** Host plugin body. Registers the namespace with the host settings service. */
+/**
+ * Host plugin body. Registers the namespace with the host settings service.
+ *
+ * The namespace is passed as a plain string (DSH >= 0.1.2-rc.1 API). All
+ * fields are optional, so a stored section with no values resolves to an
+ * empty object and the client half applies its own bundled defaults.
+ */
 export function apply(ctx: any): void {
   ctx.inject(["settings"], (settingsCtx: any) => {
-    settingsCtx.settings.register(
-      settingsNamespace(WIDE_CHAT_SETTINGS_NAMESPACE),
-      WideChatSettingsSchema,
-    );
+    settingsCtx.settings.register(WIDE_CHAT_SETTINGS_NAMESPACE, WideChatSettingsSchema);
   });
 }
 

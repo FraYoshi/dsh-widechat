@@ -38,7 +38,6 @@ const OUT_FILE = "index.js";
 const CLIENT_EXTERNALS: readonly string[] = [
   "react",
   "react/jsx-runtime",
-  "@deepseek-ai/dsh-client-runtime/client",
 ];
 
 await build({
