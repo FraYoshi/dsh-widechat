@@ -27,9 +27,9 @@ DSH is at version 0.1. The shipped chat-column CSS lives in CSS-Modules-generate
 | `uV2eYG_card` | dsh-client-ui-conversation | The composer card (the rounded pill) | No `max-height` / `overflow` — the card grows naturally to fit the inner scroll + chrome (see note below) |
 | `uV2eYG_scroll` | dsh-client-ui-conversation | The composer's inner textarea scroll | Cap `max-height` to `calc(composerMaxHeightPct vh - 64px)` (hero variant: `- 132px`) so the user's cap takes effect; `min-height: 52px` so the textarea stays usable on small viewports |
 | `Sixlwa_userStack` | dsh-client-ui-chat | The user-message bubble's stack | Cap `max-width` to `userBubblePct%` |
-| `-NDN2W_root` | dsh-client-ui-chat | The session-stats line under the composer | Set `text-align` |
+| `bOPqQW_root` | dsh-client-ui-chat | The session-stats line under the composer | Set `justify-content` (replaced `text-align` in 0.1.5-rc.2) |
 
-Renamed in 0.1.2-rc.1 (old → new): `Md3f7G_column` → `EvIC1a_column`, `gdEzaW_userStack` → `Sixlwa_userStack`, `FJxK0a_root` → `-NDN2W_root`. The three conversation hashes were untouched.
+Renamed in 0.1.2-rc.1 (old → new): `Md3f7G_column` → `EvIC1a_column`, `gdEzaW_userStack` → `Sixlwa_userStack`, `FJxK0a_root` → `-NDN2W_root`. In 0.1.5-rc.2, `-NDN2W_root` was renamed to `bOPqQW_root` and the rule changed from `text-align` to `justify-content`. The three conversation hashes were untouched.
 
 Note: `.uV2eYG_card` is *not* given `overflow: hidden` even though we cap the scroll inside it. Earlier versions did — the cap was paired with `overflow: hidden` on the card to enforce a hard visible cap — but the popover menus (model picker, permission presets, …) are absolutely-positioned descendants of elements inside the card. They open upward from the trigger row via `bottom: calc(100% + 8px)` and the card's overflow clipping hid any portion that extended above the card top. The card is now `overflow: visible`; its height is bounded by the inner scroll's `max-height` plus the card's chrome (accessory row, trigger row, padding, gaps), and the conversation scroll above the composer shrinks to make room. `.uV2eYG_scroll` also has a `min-height: 52px` so the textarea never gets so small that the trigger row ends up visually overlapping the typing area on small viewports.
 

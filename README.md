@@ -6,6 +6,7 @@ A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin tha
 | DSH version  | min version |
 | :--- | :--- |
 | `0.1.2-rc.1` | `0.8`       |
+| `0.1.5-rc.2` | `0.8.0+p` (patch branch: `patch/dsh-0.1.5-stats-align`) |
 | `0.1.1-rc.1` | `<0.8`      |
 
 **NOTE**: as at the current state, this packages has been heavily vibecoded, including most of this README. I might rewrite it at the later date, but you have been warned :)
@@ -126,7 +127,7 @@ The CSS override is intentionally minimal — it touches three things, one per s
   max-height: calc(<composerMaxHeightPct>vh - 64px) !important; /* ceiling on the textarea */
 }
 .uV2eYG_hero .uV2eYG_scroll { max-height: calc(<composerMaxHeightPct>vh - 132px) !important; }
-.-NDN2W_root     { text-align: <statsAlign> !important; }
+.bOPqQW_root     { justify-content: <statsAlign> !important; }
 ```
 
 `chatGutterPct` and `userBubblePct` are **percentages of the cell**; `composerMaxHeightPct` is a **percentage of the viewport**. The cell grows when the sidebar collapses to the rail (56px from 280px), so the column and the bubble grow with it — and the gutter stays at the same percentage. The composer cap, in contrast, is absolute to the viewport so the conversation above is always visible regardless of the sidebar state.
@@ -156,7 +157,7 @@ Invalid values are dropped to the defaults and a `console.warn` is logged with t
 
 ### This plugin overrides internal CSS-module class hashes
 
-`.wSkVaW_root`, `.EvIC1a_column`, `.uV2eYG_card`, `.uV2eYG_scroll`, `.Sixlwa_userStack`, `.-NDN2W_root` are CSS-Modules-generated class names from the DSH UI packages — since 0.1.2 the root and composer hashes come from `@deepseek-ai/dsh-client-ui-conversation` and the column, bubble and stats hashes from the new `@deepseek-ai/dsh-client-ui-chat`. Their hashes (the part after the underscore) are recomputed every time the owning package is rebuilt. Any release of those packages can therefore silently break this plugin — specifically, if the shipped rule that reads the variable or has the matching class name changes shape, our override no longer reaches it.
+`.wSkVaW_root`, `.EvIC1a_column`, `.uV2eYG_card`, `.uV2eYG_scroll`, `.Sixlwa_userStack`, `.bOPqQW_root` are CSS-Modules-generated class names from the DSH UI packages — since 0.1.2 the root and composer hashes come from `@deepseek-ai/dsh-client-ui-conversation` and the column, bubble and stats hashes from the new `@deepseek-ai/dsh-client-ui-chat`. Their hashes (the part after the underscore) are recomputed every time the owning package is rebuilt. Any release of those packages can therefore silently break this plugin — specifically, if the shipped rule that reads the variable or has the matching class name changes shape, our override no longer reaches it.
 
 After upgrading DSH, check whether the chat column widens, the user bubble stays right-aligned at the configured width, the composer's inner scroll caps at the configured height (and never gets smaller than 52 px), and the stats line still aligns. If any of those regress, the upstream CSS-module hashes changed; see "Updating" below.
 
@@ -185,7 +186,7 @@ When the upstream hashes change, the fix is mechanical but unavoidable until DSH
 - `.uV2eYG_card` — the composer card (no override — see "How it works" for why) — `dsh-client-ui-conversation`
 - `.uV2eYG_scroll` — the composer's inner textarea scroll (we cap its max-height; we floor it at 52px so the trigger row stays below the typing area) — `dsh-client-ui-conversation`
 - `.Sixlwa_userStack` — the user-message bubble stack (we set its max-width) — `dsh-client-ui-chat`
-- `.-NDN2W_root` — the session-stats line (we set its text-align) — `dsh-client-ui-chat`
+- `.bOPqQW_root` — the session-stats line (we set its `justify-content`) — `dsh-client-ui-chat`
 
 The hashes live in `dsh-client-ui-conversation/lib/client.js` and `dsh-client-ui-chat/lib/client.js` (in the profile's `node_modules`). Since 0.1.2 the CSS is inlined as `const css$N = "..."` strings, so search for the rule you're overriding (e.g. `chat-content-width`) and read the class hash out of the selector. To update:
 

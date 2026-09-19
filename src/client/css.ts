@@ -18,13 +18,13 @@
  * user bubble, stats line). They are recomputed on every upstream
  * rebuild; when they change this file is what needs updating.
  *
- * Current targets (DSH 0.1.2-rc.1):
+ * Current targets (DSH 0.1.5-rc.2):
  *   wSkVaW_root      conversation root (dsh-client-ui-conversation)
  *   EvIC1a_column    chat column, max-width: var(--dsh-chat-content-width)
  *   uV2eYG_card      composer card
  *   uV2eYG_scroll    composer inner scroll
  *   Sixlwa_userStack user-message bubble stack (dsh-client-ui-chat)
- *   -NDN2W_root      session stats line (dsh-client-ui-chat)
+ *   bOPqQW_root      session stats line (dsh-client-ui-chat)
  */
 
 import {
@@ -156,7 +156,7 @@ export function resolveConfig(raw: unknown, defaults: {
  * The composer card inherits the same cap through
  * `--dsh-composer-card-max-width`, which the shipped composer CSS
  * already reads. The stats line aligns to the user's choice via
- * `.-NDN2W_root { text-align: ... }`.
+ * `.bOPqQW_root { justify-content: ... }`.
  */
 export function buildStylesheet(config: ResolvedConfig): string {
   const g = config.chatGutterPct;
@@ -214,8 +214,8 @@ export function buildStylesheet(config: ResolvedConfig): string {
   max-height: calc(${cmh} - 132px) !important;
 }
 
-.-NDN2W_root {
-  text-align: ${config.statsAlign} !important;
+.bOPqQW_root {
+  justify-content: ${config.statsAlign === "left" ? "flex-start" : config.statsAlign === "right" ? "flex-end" : "center"} !important;
 }
 `;
 }
