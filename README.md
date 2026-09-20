@@ -4,10 +4,10 @@ A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin tha
 
 **Compatibility**
 | DSH version  | min version |
-| :--- | :--- |
-| `0.1.2-rc.1` | `0.8`       |
-| `0.1.5-rc.2` | `0.8.0+p` (patch branch: `patch/dsh-0.1.5-stats-align`) |
-| `0.1.1-rc.1` | `<0.8`      |
+|:-------------|:------------|
+| `0.1.5-rc.2` | `0.8.1`     |
+| `0.1.2-rc.1` | `0.8.0      |
+| `0.1.1-rc.1` | `<0.8.0`    |
 
 **NOTE**: as at the current state, this packages has been heavily vibecoded, including most of this README. I might rewrite it at the later date, but you have been warned :)
 
